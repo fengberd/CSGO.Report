@@ -22,9 +22,10 @@ namespace RegisterAssistance
                 var acc = t.Split(',');
                 if(acc.Length >= 3)
                 {
+                    var split = acc[0].Split('_');
                     main.data.Add(new Account()
                     {
-                        Id = int.Parse(acc[0].Substring(12)),
+                        Id = int.Parse(split[split.Length - 1]),
                         Username = acc[0],
                         Password = acc[1],
                         CDK = acc[2]
