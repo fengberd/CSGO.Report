@@ -41,6 +41,7 @@ namespace RegisterAssistance
             this.button7 = new System.Windows.Forms.Button();
             this.panel_steam = new System.Windows.Forms.Panel();
             this.tabPage_settings = new System.Windows.Forms.TabPage();
+            this.label1 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.radioButton_default_register = new System.Windows.Forms.RadioButton();
             this.radioButton_default_login = new System.Windows.Forms.RadioButton();
@@ -53,7 +54,6 @@ namespace RegisterAssistance
             this.checkBox_auto_cdk = new System.Windows.Forms.CheckBox();
             this.checkBox_auto_profile = new System.Windows.Forms.CheckBox();
             this.checkBox_auto_login = new System.Windows.Forms.CheckBox();
-            this.label1 = new System.Windows.Forms.Label();
             this.tabControl1.SuspendLayout();
             this.tabPage_steam.SuspendLayout();
             this.tabPage_settings.SuspendLayout();
@@ -214,6 +214,15 @@ namespace RegisterAssistance
             this.tabPage_settings.Text = "Settings";
             this.tabPage_settings.UseVisualStyleBackColor = true;
             // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(6, 129);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(275, 12);
+            this.label1.TabIndex = 10;
+            this.label1.Text = "↑↑↑如果你不知道这些东西是干嘛的,别点就对了";
+            // 
             // groupBox1
             // 
             this.groupBox1.Controls.Add(this.radioButton_default_register);
@@ -353,15 +362,6 @@ namespace RegisterAssistance
             this.checkBox_auto_login.Text = "Auto Login";
             this.checkBox_auto_login.UseVisualStyleBackColor = true;
             // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(6, 129);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(275, 12);
-            this.label1.TabIndex = 10;
-            this.label1.Text = "↑↑↑如果你不知道这些东西是干嘛的,别点就对了";
-            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -371,7 +371,7 @@ namespace RegisterAssistance
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.Name = "MainForm";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Register Assistant";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.RegisterForm_FormClosing);
             this.Load += new System.EventHandler(this.RegisterForm_Load);

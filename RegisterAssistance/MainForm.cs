@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 using CefSharp;
 using CefSharp.WinForms;
+using System.Drawing;
 
 namespace RegisterAssistance
 {
@@ -61,7 +62,31 @@ namespace RegisterAssistance
                     "jQuery('#i_agree_check').click();" +
                     "jQuery('.ssa_box').height(10);" +
                     "jQuery('#captcha_text').focus();" +
-                    "window.scrollY=400;");
+                    "window.scrollY=400;" +
+                    "if(jQuery('#lmao_canvas').length==0)" +
+                    "{" +
+                        "jQuery('body').append('<canvas id=lmao_canvas />');" +
+                    "}");
+                browser.MainFrame.EvaluateScriptAsync("var c=jQuery('#lmao_canvas')[0];" +
+                    "c.getContext('2d').drawImage(jQuery('#captchaImg')[0],0,0);" +
+                    "c.toDataURL();").ContinueWith(t =>
+                    {
+                        if(t.IsFaulted || !t.Result.Success)
+                        {
+                            return;
+                        }
+                        try
+                        {
+                            var image = Image.FromStream(new MemoryStream(Convert.FromBase64String(t.Result.Result.ToString().Split(',')[1])));
+                            var dialog = new CodeInputDialog(this,image);
+                            if(dialog.ShowDialog() == DialogResult.OK)
+                            {
+                                browser.MainFrame.ExecuteJavaScriptAsync("jQuery('#captcha_text').val('" + dialog.Result + "');" +
+                                     "CreateAccount();");
+                            }
+                        }
+                        catch { }
+                    });
                 break;
             case "store.steampowered.com/account/registerkey/":
                 if(!checkBox_auto_cdk.Checked)
@@ -199,7 +224,7 @@ namespace RegisterAssistance
             }
             else
             {
-                new ParseForm(this).ShowDialog();
+                new ParseDialog(this).ShowDialog();
                 if(data.Count == 0)
                 {
                     Close();

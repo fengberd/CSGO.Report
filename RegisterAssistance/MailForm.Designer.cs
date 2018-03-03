@@ -29,18 +29,18 @@
         private void InitializeComponent()
         {
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.checkBox_guard_auto = new System.Windows.Forms.CheckBox();
             this.checkBox_guard_delete = new System.Windows.Forms.CheckBox();
             this.button_guard_clear = new System.Windows.Forms.Button();
             this.listView_guard = new System.Windows.Forms.ListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.checkBox_verify_auto = new System.Windows.Forms.CheckBox();
             this.checkBox_verify_delete = new System.Windows.Forms.CheckBox();
             this.button_verify_clear = new System.Windows.Forms.Button();
             this.listView_verify = new System.Windows.Forms.ListView();
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.checkBox_verify_auto = new System.Windows.Forms.CheckBox();
-            this.checkBox_guard_auto = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -57,6 +57,17 @@
             this.groupBox1.TabIndex = 16;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Steam Guard";
+            // 
+            // checkBox_guard_auto
+            // 
+            this.checkBox_guard_auto.AutoSize = true;
+            this.checkBox_guard_auto.Enabled = false;
+            this.checkBox_guard_auto.Location = new System.Drawing.Point(138, 259);
+            this.checkBox_guard_auto.Name = "checkBox_guard_auto";
+            this.checkBox_guard_auto.Size = new System.Drawing.Size(48, 16);
+            this.checkBox_guard_auto.TabIndex = 17;
+            this.checkBox_guard_auto.Text = "Auto";
+            this.checkBox_guard_auto.UseVisualStyleBackColor = true;
             // 
             // checkBox_guard_delete
             // 
@@ -118,6 +129,18 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Account Verification";
             // 
+            // checkBox_verify_auto
+            // 
+            this.checkBox_verify_auto.AutoSize = true;
+            this.checkBox_verify_auto.Checked = true;
+            this.checkBox_verify_auto.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBox_verify_auto.Location = new System.Drawing.Point(138, 259);
+            this.checkBox_verify_auto.Name = "checkBox_verify_auto";
+            this.checkBox_verify_auto.Size = new System.Drawing.Size(48, 16);
+            this.checkBox_verify_auto.TabIndex = 16;
+            this.checkBox_verify_auto.Text = "Auto";
+            this.checkBox_verify_auto.UseVisualStyleBackColor = true;
+            // 
             // checkBox_verify_delete
             // 
             this.checkBox_verify_delete.AutoSize = true;
@@ -159,29 +182,6 @@
             this.columnHeader3.Text = "URL";
             this.columnHeader3.Width = 220;
             // 
-            // checkBox_verify_auto
-            // 
-            this.checkBox_verify_auto.AutoSize = true;
-            this.checkBox_verify_auto.Checked = true;
-            this.checkBox_verify_auto.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_verify_auto.Location = new System.Drawing.Point(138, 259);
-            this.checkBox_verify_auto.Name = "checkBox_verify_auto";
-            this.checkBox_verify_auto.Size = new System.Drawing.Size(48, 16);
-            this.checkBox_verify_auto.TabIndex = 16;
-            this.checkBox_verify_auto.Text = "Auto";
-            this.checkBox_verify_auto.UseVisualStyleBackColor = true;
-            // 
-            // checkBox_guard_auto
-            // 
-            this.checkBox_guard_auto.AutoSize = true;
-            this.checkBox_guard_auto.Enabled = false;
-            this.checkBox_guard_auto.Location = new System.Drawing.Point(138, 259);
-            this.checkBox_guard_auto.Name = "checkBox_guard_auto";
-            this.checkBox_guard_auto.Size = new System.Drawing.Size(48, 16);
-            this.checkBox_guard_auto.TabIndex = 17;
-            this.checkBox_guard_auto.Text = "Auto";
-            this.checkBox_guard_auto.UseVisualStyleBackColor = true;
-            // 
             // MailForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -192,6 +192,7 @@
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.Name = "MailForm";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Mail Client";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MailForm_FormClosed);
             this.Load += new System.EventHandler(this.MailForm_Load);

@@ -4,11 +4,11 @@ using System.Windows.Forms;
 
 namespace RegisterAssistance
 {
-    public partial class ParseForm : Form
+    public partial class ParseDialog : Form
     {
         MainForm main;
 
-        public ParseForm(MainForm main)
+        public ParseDialog(MainForm main)
         {
             InitializeComponent();
             this.main = main;
@@ -31,7 +31,7 @@ namespace RegisterAssistance
                     });
                 }
             }
-
+            main.mailPassword = textBox2.Text;
             Close();
         }
     }
