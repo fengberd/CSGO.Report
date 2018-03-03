@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // 有关程序集的一般信息由以下
 // 控制。更改这些特性值可修改
 // 与程序集关联的信息。
-[assembly: AssemblyTitle("Poi")]
+[assembly: AssemblyTitle("CSGO.Report - Register Assistance")]
 [assembly: AssemblyDescription("Steam Account Registration Assistant")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("FENGberd")]
-[assembly: AssemblyProduct("Poi")]
+[assembly: AssemblyProduct("CSGO.Report - Register Assistance")]
 [assembly: AssemblyCopyright("Copyright © FENGberd 2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
