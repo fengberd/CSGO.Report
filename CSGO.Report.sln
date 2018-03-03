@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2026
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RegisterAssistance", "RegisterAssistance\RegisterAssistance.csproj", "{3D2454A3-21CD-43AE-8B43-EDA023104D02}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3D2454A3-21CD-43AE-8B43-EDA023104D02}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{3D2454A3-21CD-43AE-8B43-EDA023104D02}.Debug|Any CPU.Build.0 = Debug|x64
+		{3D2454A3-21CD-43AE-8B43-EDA023104D02}.Release|Any CPU.ActiveCfg = Release|x64
+		{3D2454A3-21CD-43AE-8B43-EDA023104D02}.Release|Any CPU.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8F93A6A2-225C-4AE4-84E1-D6AF04CB63F0}
+	EndGlobalSection
+EndGlobal
