@@ -27,7 +27,7 @@ LOLWTF_2,YourPasswordHere,CDKEY-AAAAA-AAAAA
 ```
 Just encode the collection with base64,in this example you may get following data:
 ```text
-Q1NHT19SZXBvcnRfMSxZb3VyUGFzc3dvcmRIZXJlLENES0VZLUFBQUFBLUFBQUFBCkNTR09fUmVwb3J0XzIsWW91clBhc3N3b3JkSGVyZSxDREtFWS1BQUFBQS1BQUFBQQpDU0dPX1JlcG9ydF8zLFlvdXJQYXNzd29yZEhlcmUsQ0RLRVktQUFBQUEtQUFBQUEKQ1NHT19SZXBvcnRfNCxZb3VyUGFzc3dvcmRIZXJlLENES0VZLUFBQUFBLUFBQUFB
+UFJFRklYXzEsWW91clBhc3N3b3JkSGVyZSxDREtFWS1BQUFBQS1BQUFBQQpMT0xXVEZfMixZb3VyUGFzc3dvcmRIZXJlLENES0VZLUFBQUFBLUFBQUFB
 ```
 
 4. You need to create an `avatars` folder in the `root path` and put at least 1 `PNG File` into it.This program supports multiple avatars,if you add more than 1 avatar,the program will determine which avatar to use by id.
