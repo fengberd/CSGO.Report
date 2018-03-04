@@ -161,7 +161,7 @@ namespace RegisterAssistance
                     "document.location=shortcut.indexOf('/id/')!=-1?shortcut+'/edit':shortcut+'/edit?welcomed=1';");
                 break;
             default:
-                if(url.StartsWith("store.steampowered.com/login/"))
+                if(url.StartsWith("store.steampowered.com/login"))
                 {
                     if(!checkBox_auto_login.Checked)
                     {
@@ -171,7 +171,7 @@ namespace RegisterAssistance
                         "jQuery('#input_password').val('" + data.Password + "');" +
                         "jQuery('button[type=submit]').click();");
                 }
-                else if(url.StartsWith("steamcommunity.com/login/"))
+                else if(url.StartsWith("steamcommunity.com/login"))
                 {
                     if(!checkBox_auto_login.Checked)
                     {

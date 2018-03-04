@@ -30,6 +30,12 @@ namespace RegisterAssistance
             return null;
         }
 
+        private void deleteMail(uint id)
+        {
+            client.DeleteMessage(id);
+            client.Expunge();
+        }
+
         private void processMessage(uint id)
         {
             var message = client.GetMessage(id,FetchOptions.TextOnly);
@@ -39,7 +45,7 @@ namespace RegisterAssistance
                 var match = new Regex("Here is the Steam Guard code you need to login to account (.+)\\:\n\n([A-Z0-9]{5})\n").Match(data);
                 if(match.Success)
                 {
-                    client.DeleteMessage(id);
+                    deleteMail(id);
                     listView_guard.Items.Insert(0,new ListViewItem(new string[]
                     {
                         match.Groups[1].Value.ToLower(),
@@ -52,14 +58,17 @@ namespace RegisterAssistance
                 var match = new Regex("(https?\\://store\\.steampowered\\.com/account/newaccountverification.+)").Match(data);
                 if(match.Success)
                 {
-                    client.DeleteMessage(id);
-                    client.Expunge();
+                    deleteMail(id);
                     listView_verify.Items.Insert(0,match.Groups[1].Value);
                     if(checkBox_verify_auto.Checked)
                     {
                         main.chromeBrowser_mail.Load(match.Groups[1].Value);
                     }
                 }
+            }
+            else if(data.Contains("Your activation of <b>Counter-Strike: Global Offensive Retail</b> was\nsuccessful"))
+            {
+                deleteMail(id);
             }
         }
 

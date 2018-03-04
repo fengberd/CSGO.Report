@@ -16,6 +16,16 @@ namespace RegisterAssistance
             textBox1.Text = code;
         }
 
+        protected override bool ProcessDialogKey(Keys key)
+        {
+            if(ModifierKeys == Keys.None && key == Keys.Escape)
+            {
+                Close();
+                return true;
+            }
+            return base.ProcessDialogKey(key);
+        }
+
         private void textBox1_KeyPress(object sender,KeyPressEventArgs e)
         {
             if(e.KeyChar == '\r')
