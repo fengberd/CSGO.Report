@@ -35,6 +35,7 @@
             // 
             // textBox1
             // 
+            this.textBox1.ImeMode = System.Windows.Forms.ImeMode.Off;
             this.textBox1.Location = new System.Drawing.Point(12, 58);
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(206, 21);
@@ -63,6 +64,7 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Input Code";
+            this.TopMost = true;
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

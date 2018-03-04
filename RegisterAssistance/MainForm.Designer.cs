@@ -41,6 +41,9 @@ namespace RegisterAssistance
             this.button7 = new System.Windows.Forms.Button();
             this.panel_steam = new System.Windows.Forms.Panel();
             this.tabPage_settings = new System.Windows.Forms.TabPage();
+            this.checkBox_auto_go_next_account = new System.Windows.Forms.CheckBox();
+            this.button4 = new System.Windows.Forms.Button();
+            this.button5 = new System.Windows.Forms.Button();
             this.checkBox_auto_get_vcode = new System.Windows.Forms.CheckBox();
             this.label1 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
@@ -56,9 +59,7 @@ namespace RegisterAssistance
             this.checkBox_auto_profile = new System.Windows.Forms.CheckBox();
             this.checkBox_auto_login = new System.Windows.Forms.CheckBox();
             this.timer_get_vcode = new System.Windows.Forms.Timer(this.components);
-            this.button5 = new System.Windows.Forms.Button();
-            this.button4 = new System.Windows.Forms.Button();
-            this.checkBox_auto_go_next_account = new System.Windows.Forms.CheckBox();
+            this.panel_mail = new System.Windows.Forms.Panel();
             this.tabControl1.SuspendLayout();
             this.tabPage_steam.SuspendLayout();
             this.tabPage_settings.SuspendLayout();
@@ -131,6 +132,7 @@ namespace RegisterAssistance
             // 
             // tabPage_steam
             // 
+            this.tabPage_steam.Controls.Add(this.panel_mail);
             this.tabPage_steam.Controls.Add(this.textBox_url);
             this.tabPage_steam.Controls.Add(this.button10);
             this.tabPage_steam.Controls.Add(this.button7);
@@ -152,7 +154,7 @@ namespace RegisterAssistance
             // 
             this.textBox_url.Location = new System.Drawing.Point(8, 6);
             this.textBox_url.Name = "textBox_url";
-            this.textBox_url.Size = new System.Drawing.Size(1003, 21);
+            this.textBox_url.Size = new System.Drawing.Size(1007, 21);
             this.textBox_url.TabIndex = 13;
             this.textBox_url.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox_url_KeyPress);
             // 
@@ -207,6 +209,39 @@ namespace RegisterAssistance
             this.tabPage_settings.TabIndex = 2;
             this.tabPage_settings.Text = "Settings";
             this.tabPage_settings.UseVisualStyleBackColor = true;
+            // 
+            // checkBox_auto_go_next_account
+            // 
+            this.checkBox_auto_go_next_account.AutoSize = true;
+            this.checkBox_auto_go_next_account.Checked = true;
+            this.checkBox_auto_go_next_account.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBox_auto_go_next_account.Location = new System.Drawing.Point(758, 28);
+            this.checkBox_auto_go_next_account.Name = "checkBox_auto_go_next_account";
+            this.checkBox_auto_go_next_account.Size = new System.Drawing.Size(228, 16);
+            this.checkBox_auto_go_next_account.TabIndex = 14;
+            this.checkBox_auto_go_next_account.Text = "Goto Next Account After Join Group";
+            this.checkBox_auto_go_next_account.UseVisualStyleBackColor = true;
+            // 
+            // button4
+            // 
+            this.button4.Font = new System.Drawing.Font("宋体", 9F);
+            this.button4.Location = new System.Drawing.Point(255, 72);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(93, 23);
+            this.button4.TabIndex = 13;
+            this.button4.Text = "Fill Form";
+            this.button4.UseVisualStyleBackColor = true;
+            // 
+            // button5
+            // 
+            this.button5.Font = new System.Drawing.Font("宋体", 9F);
+            this.button5.Location = new System.Drawing.Point(156, 72);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(93, 23);
+            this.button5.TabIndex = 12;
+            this.button5.Text = "DevTools";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
             // checkBox_auto_get_vcode
             // 
@@ -371,40 +406,16 @@ namespace RegisterAssistance
             // 
             // timer_get_vcode
             // 
+            this.timer_get_vcode.Interval = 550;
             this.timer_get_vcode.Tick += new System.EventHandler(this.timer_get_vcode_Tick);
             // 
-            // button5
+            // panel_mail
             // 
-            this.button5.Font = new System.Drawing.Font("宋体", 9F);
-            this.button5.Location = new System.Drawing.Point(156, 72);
-            this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(93, 23);
-            this.button5.TabIndex = 12;
-            this.button5.Text = "DevTools";
-            this.button5.UseVisualStyleBackColor = true;
-            this.button5.Click += new System.EventHandler(this.button5_Click);
-            // 
-            // button4
-            // 
-            this.button4.Font = new System.Drawing.Font("宋体", 9F);
-            this.button4.Location = new System.Drawing.Point(255, 72);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(93, 23);
-            this.button4.TabIndex = 13;
-            this.button4.Text = "Fill Form";
-            this.button4.UseVisualStyleBackColor = true;
-            // 
-            // checkBox_auto_go_next_account
-            // 
-            this.checkBox_auto_go_next_account.AutoSize = true;
-            this.checkBox_auto_go_next_account.Checked = true;
-            this.checkBox_auto_go_next_account.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_auto_go_next_account.Location = new System.Drawing.Point(758, 28);
-            this.checkBox_auto_go_next_account.Name = "checkBox_auto_go_next_account";
-            this.checkBox_auto_go_next_account.Size = new System.Drawing.Size(228, 16);
-            this.checkBox_auto_go_next_account.TabIndex = 14;
-            this.checkBox_auto_go_next_account.Text = "Goto Next Account After Join Group";
-            this.checkBox_auto_go_next_account.UseVisualStyleBackColor = true;
+            this.panel_mail.Location = new System.Drawing.Point(833, 534);
+            this.panel_mail.Name = "panel_mail";
+            this.panel_mail.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.panel_mail.Size = new System.Drawing.Size(10, 23);
+            this.panel_mail.TabIndex = 0;
             // 
             // MainForm
             // 
@@ -460,5 +471,6 @@ namespace RegisterAssistance
         private System.Windows.Forms.Button button5;
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.CheckBox checkBox_auto_go_next_account;
+        private System.Windows.Forms.Panel panel_mail;
     }
 }

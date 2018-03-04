@@ -16,7 +16,7 @@ namespace RegisterAssistance
         public string mailPassword = "";
 
         public IBrowser browser;
-        public ChromiumWebBrowser chromeBrowser_steam;
+        public ChromiumWebBrowser chromeBrowser_steam, chromeBrowser_mail;
 
         public List<Account> data = new List<Account>();
         public List<string> avatars = new List<string>();
@@ -26,8 +26,12 @@ namespace RegisterAssistance
             InitializeComponent();
             FormClosing += (sender,e) => Cef.Shutdown();
             CheckForIllegalCrossThreadCalls = false;
-            var settings = new CefSettings();
-            Cef.Initialize(settings);
+            Cef.Initialize(new CefSettings()
+            {
+                CachePath = "Cache",
+                UserDataPath = "UserData",
+                LogSeverity = LogSeverity.Disable
+            });
             panel_steam.Controls.Add(chromeBrowser_steam = new ChromiumWebBrowser("")
             {
                 Dock = DockStyle.Fill
@@ -44,6 +48,14 @@ namespace RegisterAssistance
                     browser = chromeBrowser_steam.GetBrowser();
                     timer_get_vcode.Enabled = true;
                 }
+            };
+            panel_mail.Controls.Add(chromeBrowser_mail = new ChromiumWebBrowser("")
+            {
+                Dock = DockStyle.Fill
+            });
+            chromeBrowser_mail.FrameLoadEnd += (sender,e) =>
+            {
+                chromeBrowser_mail.ExecuteScriptAsync("document.write('');");
             };
         }
 
@@ -62,6 +74,23 @@ namespace RegisterAssistance
             {
                 chromeBrowser_steam.Load(url);
             }
+        }
+
+        private void loadAccount()
+        {
+            button8.Enabled = index < data.Count - 1;
+            button9.Enabled = index != 0;
+            Text = "Register Assistant - " + data[index].Username;
+            if(radioButton_default_login.Checked)
+            {
+                button7.PerformClick();
+            }
+            else
+            {
+                button1.PerformClick();
+            }
+            Cef.GetGlobalCookieManager().DeleteCookies("http://steamcommunity.com");
+            Cef.GetGlobalCookieManager().DeleteCookies("https://store.steampowered.com");
         }
 
         private void fillForm()
@@ -197,22 +226,7 @@ namespace RegisterAssistance
             }
         }
 
-        private void loadAccount()
-        {
-            button8.Enabled = index < data.Count - 1;
-            button9.Enabled = index != 0;
-            Text = "Register Assistant - " + data[index].Username;
-            if(radioButton_default_login.Checked)
-            {
-                button7.PerformClick();
-            }
-            else
-            {
-                button1.PerformClick();
-            }
-            Cef.GetGlobalCookieManager().DeleteCookies("http://steamcommunity.com");
-            Cef.GetGlobalCookieManager().DeleteCookies("https://store.steampowered.com");
-        }
+        #region Events
 
         private void RegisterForm_Load(object sender,EventArgs e)
         {
@@ -245,6 +259,58 @@ namespace RegisterAssistance
                 }
             }
         }
+
+        private void checkBox_auto_get_vcode_CheckedChanged(object sender,EventArgs e)
+        {
+            timer_get_vcode.Enabled = checkBox_auto_get_vcode.Checked;
+        }
+
+        private void textBox_url_KeyPress(object sender,KeyPressEventArgs e)
+        {
+            if(e.KeyChar == '\r')
+            {
+                loadUrl(textBox_url.Text);
+            }
+        }
+
+        private void timer_get_vcode_Tick(object sender,EventArgs e)
+        {
+            if(!vcode_shown && !browser.IsLoading && browser.MainFrame.Url.ToLower().Replace("http://","").Replace("https://","").Replace("//","/") == "store.steampowered.com/join/")
+            {
+                browser.MainFrame.EvaluateScriptAsync("if(jQuery('#lmao_canvas').length==0)" +
+                    "{" +
+                        "jQuery('body').append('<canvas id=lmao_canvas />');" +
+                    "}" +
+                    "var c=jQuery('#lmao_canvas')[0];" +
+                    "c.getContext('2d').drawImage(jQuery('#captchaImg')[0],0,0);" +
+                    "c.toDataURL();",timeout: TimeSpan.FromMilliseconds(500)).ContinueWith((r) =>
+                    {
+                        if(r.IsFaulted || !r.Result.Success || vcode_shown)
+                        {
+                            return;
+                        }
+                        Invoke(new Action(() =>
+                        {
+                            try
+                            {
+                                var image = Image.FromStream(new MemoryStream(Convert.FromBase64String(r.Result.Result.ToString().Split(',')[1])));
+                                vcode_shown = true;
+                                var dialog = new CodeInputDialog(this,image);
+                                if(dialog.ShowDialog() == DialogResult.OK)
+                                {
+                                    browser.MainFrame.ExecuteJavaScriptAsync("jQuery('#captcha_text').val('" + dialog.Result + "');" +
+                                         "CreateAccount();");
+                                }
+                            }
+                            catch { }
+                        }));
+                    });
+            }
+        }
+
+        #endregion
+
+        #region Button Events
 
         private void button1_Click(object sender,EventArgs e)
         {
@@ -293,49 +359,6 @@ namespace RegisterAssistance
             loadUrl("http://steamcommunity.com/groups/csgo_report/");
         }
 
-        private void checkBox_auto_get_vcode_CheckedChanged(object sender,EventArgs e)
-        {
-            timer_get_vcode.Enabled = checkBox_auto_get_vcode.Checked;
-        }
-
-        private void textBox_url_KeyPress(object sender,KeyPressEventArgs e)
-        {
-            if(e.KeyChar == '\r')
-            {
-                loadUrl(textBox_url.Text);
-            }
-        }
-
-        private void timer_get_vcode_Tick(object sender,EventArgs e)
-        {
-            if(!vcode_shown && !browser.IsLoading && browser.MainFrame.Url.ToLower().Replace("http://","").Replace("https://","").Replace("//","/") == "store.steampowered.com/join/")
-            {
-                browser.MainFrame.EvaluateScriptAsync("if(jQuery('#lmao_canvas').length==0)" +
-                    "{" +
-                        "jQuery('body').append('<canvas id=lmao_canvas />');" +
-                    "}" +
-                    "var c=jQuery('#lmao_canvas')[0];" +
-                    "c.getContext('2d').drawImage(jQuery('#captchaImg')[0],0,0);" +
-                    "c.toDataURL();").ContinueWith((r) =>
-                    {
-                        if(r.IsFaulted || !r.Result.Success || vcode_shown)
-                        {
-                            return;
-                        }
-                        try
-                        {
-                            var image = Image.FromStream(new MemoryStream(Convert.FromBase64String(r.Result.Result.ToString().Split(',')[1])));
-                            vcode_shown = true;
-                            var dialog = new CodeInputDialog(this,image);
-                            if(dialog.ShowDialog() == DialogResult.OK)
-                            {
-                                browser.MainFrame.ExecuteJavaScriptAsync("jQuery('#captcha_text').val('" + dialog.Result + "');" +
-                                     "CreateAccount();");
-                            }
-                        }
-                        catch { }
-                    });
-            }
-        }
+        #endregion
     }
 }

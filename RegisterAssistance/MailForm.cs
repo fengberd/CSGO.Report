@@ -53,14 +53,11 @@ namespace RegisterAssistance
                 if(match.Success)
                 {
                     client.DeleteMessage(id);
+                    client.Expunge();
                     listView_verify.Items.Insert(0,match.Groups[1].Value);
                     if(checkBox_verify_auto.Checked)
                     {
-                        main.browser.MainFrame.ExecuteJavaScriptAsync("var vwindow=window.open('" + match.Groups[1].Value + "','Account Verification','width=600,height=300');" +
-                            "vwindow.onload=function()" +
-                            "{" +
-                                "vwindow.close();" +
-                            "}");
+                        main.chromeBrowser_mail.Load(match.Groups[1].Value);
                     }
                 }
             }
@@ -85,6 +82,11 @@ namespace RegisterAssistance
             }
             else
             {
+                client.IdleError += (s,ev) =>
+                {
+                    Console.WriteLine(ev.Exception);
+                };
+                client.NewMessage += (s,ev) => processMessage(ev.MessageUID);
                 new Thread(new ThreadStart(() =>
                 {
                     while(!IsDisposed)
@@ -100,11 +102,6 @@ namespace RegisterAssistance
                 {
                     IsBackground = true
                 }.Start();
-                client.IdleError += (s,ev) =>
-                {
-                    Console.WriteLine(ev.Exception);
-                };
-                client.NewMessage += (s,ev) => processMessage(ev.MessageUID);
             }
         }
 
