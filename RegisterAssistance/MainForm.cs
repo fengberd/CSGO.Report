@@ -1,17 +1,18 @@
 using System;
 using System.IO;
+using System.Drawing;
 using System.Windows.Forms;
 using System.Collections.Generic;
 
 using CefSharp;
 using CefSharp.WinForms;
-using System.Drawing;
 
 namespace RegisterAssistance
 {
     public partial class MainForm : Form
     {
         public int index = 0;
+        public bool vcode_shown = false;
         public string mailPassword = "";
 
         public IBrowser browser;
@@ -23,6 +24,7 @@ namespace RegisterAssistance
         public MainForm()
         {
             InitializeComponent();
+            FormClosing += (sender,e) => Cef.Shutdown();
             CheckForIllegalCrossThreadCalls = false;
             var settings = new CefSettings();
             Cef.Initialize(settings);
@@ -30,12 +32,17 @@ namespace RegisterAssistance
             {
                 Dock = DockStyle.Fill
             });
-            chromeBrowser_steam.FrameLoadEnd += ChromeBrowser_FrameLoadEnd;
+            chromeBrowser_steam.FrameLoadEnd += (sender,e) =>
+            {
+                textBox_url.Text = e.Url;
+                fillForm();
+            };
             chromeBrowser_steam.IsBrowserInitializedChanged += (sender,e) =>
             {
                 if(e.IsBrowserInitialized)
                 {
                     browser = chromeBrowser_steam.GetBrowser();
+                    timer_get_vcode.Enabled = true;
                 }
             };
         }
@@ -45,14 +52,26 @@ namespace RegisterAssistance
             return avatars[id % avatars.Count];
         }
 
+        private void loadUrl(string url)
+        {
+            if(url == browser.MainFrame.Url)
+            {
+                chromeBrowser_steam.Reload();
+            }
+            else
+            {
+                chromeBrowser_steam.Load(url);
+            }
+        }
+
         private void fillForm()
         {
             var data = this.data[index];
-            var url = chromeBrowser_steam.GetMainFrame().Url.ToLower().Replace("http://","").Replace("https://","").Replace("//","/");
+            var url = browser.MainFrame.Url.ToLower().Replace("http://","").Replace("https://","").Replace("//","/").TrimEnd(new char[] { '/' });
             Console.WriteLine(url);
             switch(url)
             {
-            case "store.steampowered.com/join/":
+            case "store.steampowered.com/join":
                 browser.MainFrame.ExecuteJavaScriptAsync("jQuery('#accountname').val('" + data.Username + "');" +
                     "CheckAccountNameAvailability();" +
                     "jQuery('#password,#reenter_password').val('" + data.Password + "');" +
@@ -62,33 +81,10 @@ namespace RegisterAssistance
                     "jQuery('#i_agree_check').click();" +
                     "jQuery('.ssa_box').height(10);" +
                     "jQuery('#captcha_text').focus();" +
-                    "window.scrollY=400;" +
-                    "if(jQuery('#lmao_canvas').length==0)" +
-                    "{" +
-                        "jQuery('body').append('<canvas id=lmao_canvas />');" +
-                    "}");
-                browser.MainFrame.EvaluateScriptAsync("var c=jQuery('#lmao_canvas')[0];" +
-                    "c.getContext('2d').drawImage(jQuery('#captchaImg')[0],0,0);" +
-                    "c.toDataURL();").ContinueWith(t =>
-                    {
-                        if(t.IsFaulted || !t.Result.Success)
-                        {
-                            return;
-                        }
-                        try
-                        {
-                            var image = Image.FromStream(new MemoryStream(Convert.FromBase64String(t.Result.Result.ToString().Split(',')[1])));
-                            var dialog = new CodeInputDialog(this,image);
-                            if(dialog.ShowDialog() == DialogResult.OK)
-                            {
-                                browser.MainFrame.ExecuteJavaScriptAsync("jQuery('#captcha_text').val('" + dialog.Result + "');" +
-                                     "CreateAccount();");
-                            }
-                        }
-                        catch { }
-                    });
+                    "window.scrollY=400;");
+                vcode_shown = false;
                 break;
-            case "store.steampowered.com/account/registerkey/":
+            case "store.steampowered.com/account/registerkey":
                 if(!checkBox_auto_cdk.Checked)
                 {
                     return;
@@ -106,7 +102,7 @@ namespace RegisterAssistance
                     "};" +
                     "RegisterProductKey();");
                 break;
-            case "steamcommunity.com/groups/csgo_report/":
+            case "steamcommunity.com/groups/csgo_report":
                 if(!checkBox_auto_group.Checked)
                 {
                     return;
@@ -115,6 +111,16 @@ namespace RegisterAssistance
                     "{" +
                         "document.forms['join_group_form'].submit();" +
                     "}");
+                if(checkBox_auto_go_next_account.Checked && button8.Enabled)
+                {
+                    browser.MainFrame.EvaluateScriptAsync("jQuery('.grouppage_join_area .btn_blue_white_innerfade').length==1?'true':'false'").ContinueWith((r) =>
+                    {
+                        if(!r.IsFaulted && r.Result.Success && r.Result.Result.ToString() == "true")
+                        {
+                            button8.PerformClick();
+                        }
+                    });
+                }
                 break;
             case "steamcommunity.com/?go_profile":
             case "store.steampowered.com/?created_account=1":
@@ -191,7 +197,7 @@ namespace RegisterAssistance
             }
         }
 
-        private void load()
+        private void loadAccount()
         {
             button8.Enabled = index < data.Count - 1;
             button9.Enabled = index != 0;
@@ -231,35 +237,28 @@ namespace RegisterAssistance
                 }
                 else
                 {
-                    load();
-                    new MailForm(this).Show();
+                    loadAccount();
+                    if(mailPassword != "")
+                    {
+                        new MailForm(this).Show();
+                    }
                 }
             }
         }
 
-        private void RegisterForm_FormClosing(object sender,FormClosingEventArgs e)
-        {
-            Cef.Shutdown();
-        }
-
-        private void ChromeBrowser_FrameLoadEnd(object sender,FrameLoadEndEventArgs e)
-        {
-            fillForm();
-        }
-
         private void button1_Click(object sender,EventArgs e)
         {
-            chromeBrowser_steam.Load("https://store.steampowered.com/join/");
+            loadUrl("https://store.steampowered.com/join/");
         }
 
         private void button2_Click(object sender,EventArgs e)
         {
-            chromeBrowser_steam.Load("http://steamcommunity.com/?go_profile");
+            loadUrl("http://steamcommunity.com/?go_profile");
         }
 
         private void button3_Click(object sender,EventArgs e)
         {
-            chromeBrowser_steam.Load("https://store.steampowered.com/account/registerkey/");
+            loadUrl("https://store.steampowered.com/account/registerkey/");
         }
 
         private void button4_Click(object sender,EventArgs e)
@@ -274,24 +273,69 @@ namespace RegisterAssistance
 
         private void button7_Click(object sender,EventArgs e)
         {
-            chromeBrowser_steam.Load("https://store.steampowered.com/login/");
+            loadUrl("https://store.steampowered.com/login/");
         }
 
         private void button8_Click(object sender,EventArgs e)
         {
             index++;
-            load();
+            loadAccount();
         }
 
         private void button9_Click(object sender,EventArgs e)
         {
             index--;
-            load();
+            loadAccount();
         }
 
         private void button10_Click(object sender,EventArgs e)
         {
-            chromeBrowser_steam.Load("http://steamcommunity.com/groups/csgo_report/");
+            loadUrl("http://steamcommunity.com/groups/csgo_report/");
+        }
+
+        private void checkBox_auto_get_vcode_CheckedChanged(object sender,EventArgs e)
+        {
+            timer_get_vcode.Enabled = checkBox_auto_get_vcode.Checked;
+        }
+
+        private void textBox_url_KeyPress(object sender,KeyPressEventArgs e)
+        {
+            if(e.KeyChar == '\r')
+            {
+                loadUrl(textBox_url.Text);
+            }
+        }
+
+        private void timer_get_vcode_Tick(object sender,EventArgs e)
+        {
+            if(!vcode_shown && !browser.IsLoading && browser.MainFrame.Url.ToLower().Replace("http://","").Replace("https://","").Replace("//","/") == "store.steampowered.com/join/")
+            {
+                browser.MainFrame.EvaluateScriptAsync("if(jQuery('#lmao_canvas').length==0)" +
+                    "{" +
+                        "jQuery('body').append('<canvas id=lmao_canvas />');" +
+                    "}" +
+                    "var c=jQuery('#lmao_canvas')[0];" +
+                    "c.getContext('2d').drawImage(jQuery('#captchaImg')[0],0,0);" +
+                    "c.toDataURL();").ContinueWith((r) =>
+                    {
+                        if(r.IsFaulted || !r.Result.Success || vcode_shown)
+                        {
+                            return;
+                        }
+                        try
+                        {
+                            var image = Image.FromStream(new MemoryStream(Convert.FromBase64String(r.Result.Result.ToString().Split(',')[1])));
+                            vcode_shown = true;
+                            var dialog = new CodeInputDialog(this,image);
+                            if(dialog.ShowDialog() == DialogResult.OK)
+                            {
+                                browser.MainFrame.ExecuteJavaScriptAsync("jQuery('#captcha_text').val('" + dialog.Result + "');" +
+                                     "CreateAccount();");
+                            }
+                        }
+                        catch { }
+                    });
+            }
         }
     }
 }

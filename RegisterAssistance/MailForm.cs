@@ -56,7 +56,7 @@ namespace RegisterAssistance
                     listView_verify.Items.Insert(0,match.Groups[1].Value);
                     if(checkBox_verify_auto.Checked)
                     {
-                        main.chromeBrowser_steam.GetBrowser().MainFrame.ExecuteJavaScriptAsync("var vwindow=window.open('" + match.Groups[1].Value + "','Account Verification','width=600,height=300');" +
+                        main.browser.MainFrame.ExecuteJavaScriptAsync("var vwindow=window.open('" + match.Groups[1].Value + "','Account Verification','width=600,height=300');" +
                             "vwindow.onload=function()" +
                             "{" +
                                 "vwindow.close();" +
@@ -78,13 +78,11 @@ namespace RegisterAssistance
                 MessageBox.Show("Can't log in to mail server.","Error",MessageBoxButtons.OK,MessageBoxIcon.Error);
                 Close();
             }
-            /*
             else if(!client.Supports("IDLE"))
             {
                 MessageBox.Show("Server doesn't support IDLE.","Error",MessageBoxButtons.OK,MessageBoxIcon.Error);
                 Close();
             }
-            */
             else
             {
                 new Thread(new ThreadStart(() =>
@@ -102,13 +100,11 @@ namespace RegisterAssistance
                 {
                     IsBackground = true
                 }.Start();
-                /*
                 client.IdleError += (s,ev) =>
                 {
                     Console.WriteLine(ev.Exception);
                 };
                 client.NewMessage += (s,ev) => processMessage(ev.MessageUID);
-                */
             }
         }
 
@@ -143,7 +139,7 @@ namespace RegisterAssistance
         {
             if(listView_verify.SelectedItems.Count != 0)
             {
-                main.chromeBrowser_steam.GetBrowser().MainFrame.ExecuteJavaScriptAsync("window.open('" + listView_verify.SelectedItems[0].Text + "');");
+                main.browser.MainFrame.ExecuteJavaScriptAsync("window.open('" + listView_verify.SelectedItems[0].Text + "');");
                 if(checkBox_verify_delete.Checked)
                 {
                     listView_verify.Items.Remove(listView_verify.SelectedItems[0]);

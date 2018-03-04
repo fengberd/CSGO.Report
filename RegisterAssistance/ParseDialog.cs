@@ -16,7 +16,15 @@ namespace RegisterAssistance
 
         private void button1_Click(object sender,EventArgs e)
         {
-            var data = Encoding.UTF8.GetString(Convert.FromBase64String(textBox1.Text)).Replace("\r","").Split('\n');
+            string[] data;
+            try
+            {
+                data = Encoding.UTF8.GetString(Convert.FromBase64String(textBox1.Text)).Replace("\r","").Split('\n');
+            }
+            catch(FormatException)
+            {
+                data = textBox1.Text.Replace("\r","").Split('\n');
+            }
             foreach(string t in data)
             {
                 var acc = t.Split(',');

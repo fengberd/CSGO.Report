@@ -28,19 +28,20 @@ namespace RegisterAssistance
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
             this.button3 = new System.Windows.Forms.Button();
-            this.button4 = new System.Windows.Forms.Button();
             this.button9 = new System.Windows.Forms.Button();
             this.button8 = new System.Windows.Forms.Button();
-            this.button5 = new System.Windows.Forms.Button();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage_steam = new System.Windows.Forms.TabPage();
+            this.textBox_url = new System.Windows.Forms.TextBox();
             this.button10 = new System.Windows.Forms.Button();
             this.button7 = new System.Windows.Forms.Button();
             this.panel_steam = new System.Windows.Forms.Panel();
             this.tabPage_settings = new System.Windows.Forms.TabPage();
+            this.checkBox_auto_get_vcode = new System.Windows.Forms.CheckBox();
             this.label1 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.radioButton_default_register = new System.Windows.Forms.RadioButton();
@@ -54,6 +55,10 @@ namespace RegisterAssistance
             this.checkBox_auto_cdk = new System.Windows.Forms.CheckBox();
             this.checkBox_auto_profile = new System.Windows.Forms.CheckBox();
             this.checkBox_auto_login = new System.Windows.Forms.CheckBox();
+            this.timer_get_vcode = new System.Windows.Forms.Timer(this.components);
+            this.button5 = new System.Windows.Forms.Button();
+            this.button4 = new System.Windows.Forms.Button();
+            this.checkBox_auto_go_next_account = new System.Windows.Forms.CheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPage_steam.SuspendLayout();
             this.tabPage_settings.SuspendLayout();
@@ -62,7 +67,7 @@ namespace RegisterAssistance
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(242, 534);
+            this.button1.Location = new System.Drawing.Point(8, 534);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(112, 23);
             this.button1.TabIndex = 1;
@@ -72,7 +77,7 @@ namespace RegisterAssistance
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(478, 534);
+            this.button2.Location = new System.Drawing.Point(244, 534);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(112, 23);
             this.button2.TabIndex = 2;
@@ -82,7 +87,7 @@ namespace RegisterAssistance
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(596, 534);
+            this.button3.Location = new System.Drawing.Point(362, 534);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(112, 23);
             this.button3.TabIndex = 3;
@@ -90,23 +95,12 @@ namespace RegisterAssistance
             this.button3.UseVisualStyleBackColor = true;
             this.button3.Click += new System.EventHandler(this.button3_Click);
             // 
-            // button4
-            // 
-            this.button4.Font = new System.Drawing.Font("宋体", 9F);
-            this.button4.Location = new System.Drawing.Point(8, 534);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(93, 23);
-            this.button4.TabIndex = 0;
-            this.button4.Text = "Fill Form";
-            this.button4.UseVisualStyleBackColor = true;
-            this.button4.Click += new System.EventHandler(this.button4_Click);
-            // 
             // button9
             // 
             this.button9.Enabled = false;
-            this.button9.Location = new System.Drawing.Point(877, 534);
+            this.button9.Location = new System.Drawing.Point(849, 534);
             this.button9.Name = "button9";
-            this.button9.Size = new System.Drawing.Size(64, 23);
+            this.button9.Size = new System.Drawing.Size(80, 23);
             this.button9.TabIndex = 9;
             this.button9.Text = "<";
             this.button9.UseVisualStyleBackColor = true;
@@ -114,24 +108,13 @@ namespace RegisterAssistance
             // 
             // button8
             // 
-            this.button8.Location = new System.Drawing.Point(947, 534);
+            this.button8.Location = new System.Drawing.Point(935, 534);
             this.button8.Name = "button8";
-            this.button8.Size = new System.Drawing.Size(64, 23);
+            this.button8.Size = new System.Drawing.Size(80, 23);
             this.button8.TabIndex = 8;
             this.button8.Text = ">";
             this.button8.UseVisualStyleBackColor = true;
             this.button8.Click += new System.EventHandler(this.button8_Click);
-            // 
-            // button5
-            // 
-            this.button5.Font = new System.Drawing.Font("宋体", 9F);
-            this.button5.Location = new System.Drawing.Point(107, 534);
-            this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(93, 23);
-            this.button5.TabIndex = 10;
-            this.button5.Text = "DevTools";
-            this.button5.UseVisualStyleBackColor = true;
-            this.button5.Click += new System.EventHandler(this.button5_Click);
             // 
             // tabControl1
             // 
@@ -148,11 +131,10 @@ namespace RegisterAssistance
             // 
             // tabPage_steam
             // 
+            this.tabPage_steam.Controls.Add(this.textBox_url);
             this.tabPage_steam.Controls.Add(this.button10);
             this.tabPage_steam.Controls.Add(this.button7);
             this.tabPage_steam.Controls.Add(this.panel_steam);
-            this.tabPage_steam.Controls.Add(this.button5);
-            this.tabPage_steam.Controls.Add(this.button4);
             this.tabPage_steam.Controls.Add(this.button9);
             this.tabPage_steam.Controls.Add(this.button1);
             this.tabPage_steam.Controls.Add(this.button8);
@@ -166,9 +148,17 @@ namespace RegisterAssistance
             this.tabPage_steam.Text = "Steam";
             this.tabPage_steam.UseVisualStyleBackColor = true;
             // 
+            // textBox_url
+            // 
+            this.textBox_url.Location = new System.Drawing.Point(8, 6);
+            this.textBox_url.Name = "textBox_url";
+            this.textBox_url.Size = new System.Drawing.Size(1003, 21);
+            this.textBox_url.TabIndex = 13;
+            this.textBox_url.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.textBox_url_KeyPress);
+            // 
             // button10
             // 
-            this.button10.Location = new System.Drawing.Point(714, 534);
+            this.button10.Location = new System.Drawing.Point(480, 534);
             this.button10.Name = "button10";
             this.button10.Size = new System.Drawing.Size(112, 23);
             this.button10.TabIndex = 12;
@@ -178,7 +168,7 @@ namespace RegisterAssistance
             // 
             // button7
             // 
-            this.button7.Location = new System.Drawing.Point(360, 534);
+            this.button7.Location = new System.Drawing.Point(126, 534);
             this.button7.Name = "button7";
             this.button7.Size = new System.Drawing.Size(112, 23);
             this.button7.TabIndex = 11;
@@ -188,13 +178,17 @@ namespace RegisterAssistance
             // 
             // panel_steam
             // 
-            this.panel_steam.Location = new System.Drawing.Point(8, 6);
+            this.panel_steam.Location = new System.Drawing.Point(8, 33);
             this.panel_steam.Name = "panel_steam";
-            this.panel_steam.Size = new System.Drawing.Size(1007, 522);
+            this.panel_steam.Size = new System.Drawing.Size(1007, 495);
             this.panel_steam.TabIndex = 0;
             // 
             // tabPage_settings
             // 
+            this.tabPage_settings.Controls.Add(this.checkBox_auto_go_next_account);
+            this.tabPage_settings.Controls.Add(this.button4);
+            this.tabPage_settings.Controls.Add(this.button5);
+            this.tabPage_settings.Controls.Add(this.checkBox_auto_get_vcode);
             this.tabPage_settings.Controls.Add(this.label1);
             this.tabPage_settings.Controls.Add(this.groupBox1);
             this.tabPage_settings.Controls.Add(this.checkBox_override_profile_check);
@@ -213,6 +207,19 @@ namespace RegisterAssistance
             this.tabPage_settings.TabIndex = 2;
             this.tabPage_settings.Text = "Settings";
             this.tabPage_settings.UseVisualStyleBackColor = true;
+            // 
+            // checkBox_auto_get_vcode
+            // 
+            this.checkBox_auto_get_vcode.AutoSize = true;
+            this.checkBox_auto_get_vcode.Checked = true;
+            this.checkBox_auto_get_vcode.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBox_auto_get_vcode.Location = new System.Drawing.Point(170, 50);
+            this.checkBox_auto_get_vcode.Name = "checkBox_auto_get_vcode";
+            this.checkBox_auto_get_vcode.Size = new System.Drawing.Size(126, 16);
+            this.checkBox_auto_get_vcode.TabIndex = 11;
+            this.checkBox_auto_get_vcode.Text = "Auto Prompt VCode";
+            this.checkBox_auto_get_vcode.UseVisualStyleBackColor = true;
+            this.checkBox_auto_get_vcode.CheckedChanged += new System.EventHandler(this.checkBox_auto_get_vcode_CheckedChanged);
             // 
             // label1
             // 
@@ -362,6 +369,43 @@ namespace RegisterAssistance
             this.checkBox_auto_login.Text = "Auto Login";
             this.checkBox_auto_login.UseVisualStyleBackColor = true;
             // 
+            // timer_get_vcode
+            // 
+            this.timer_get_vcode.Tick += new System.EventHandler(this.timer_get_vcode_Tick);
+            // 
+            // button5
+            // 
+            this.button5.Font = new System.Drawing.Font("宋体", 9F);
+            this.button5.Location = new System.Drawing.Point(156, 72);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(93, 23);
+            this.button5.TabIndex = 12;
+            this.button5.Text = "DevTools";
+            this.button5.UseVisualStyleBackColor = true;
+            this.button5.Click += new System.EventHandler(this.button5_Click);
+            // 
+            // button4
+            // 
+            this.button4.Font = new System.Drawing.Font("宋体", 9F);
+            this.button4.Location = new System.Drawing.Point(255, 72);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(93, 23);
+            this.button4.TabIndex = 13;
+            this.button4.Text = "Fill Form";
+            this.button4.UseVisualStyleBackColor = true;
+            // 
+            // checkBox_auto_go_next_account
+            // 
+            this.checkBox_auto_go_next_account.AutoSize = true;
+            this.checkBox_auto_go_next_account.Checked = true;
+            this.checkBox_auto_go_next_account.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBox_auto_go_next_account.Location = new System.Drawing.Point(758, 28);
+            this.checkBox_auto_go_next_account.Name = "checkBox_auto_go_next_account";
+            this.checkBox_auto_go_next_account.Size = new System.Drawing.Size(228, 16);
+            this.checkBox_auto_go_next_account.TabIndex = 14;
+            this.checkBox_auto_go_next_account.Text = "Goto Next Account After Join Group";
+            this.checkBox_auto_go_next_account.UseVisualStyleBackColor = true;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -373,10 +417,10 @@ namespace RegisterAssistance
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Register Assistant";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.RegisterForm_FormClosing);
             this.Load += new System.EventHandler(this.RegisterForm_Load);
             this.tabControl1.ResumeLayout(false);
             this.tabPage_steam.ResumeLayout(false);
+            this.tabPage_steam.PerformLayout();
             this.tabPage_settings.ResumeLayout(false);
             this.tabPage_settings.PerformLayout();
             this.groupBox1.ResumeLayout(false);
@@ -389,10 +433,8 @@ namespace RegisterAssistance
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Button button3;
-        private System.Windows.Forms.Button button4;
         private System.Windows.Forms.Button button9;
         private System.Windows.Forms.Button button8;
-        private System.Windows.Forms.Button button5;
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPage_steam;
         private System.Windows.Forms.Panel panel_steam;
@@ -412,5 +454,11 @@ namespace RegisterAssistance
         private System.Windows.Forms.RadioButton radioButton_default_register;
         private System.Windows.Forms.RadioButton radioButton_default_login;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Timer timer_get_vcode;
+        private System.Windows.Forms.CheckBox checkBox_auto_get_vcode;
+        private System.Windows.Forms.TextBox textBox_url;
+        private System.Windows.Forms.Button button5;
+        private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.CheckBox checkBox_auto_go_next_account;
     }
 }
