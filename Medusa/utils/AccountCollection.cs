@@ -1,9 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System.Linq;
+using System.Collections.Generic;
 
 namespace Medusa.utils
 {
     public class AccountCollection : List<Account>
     {
+        public int AvailableCount => this.Where((a) => a.Available).Count();
+
         public int ConnectAll()
         {
             int success = 0;

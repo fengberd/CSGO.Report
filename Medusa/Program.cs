@@ -1,12 +1,19 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Net;
+using System.Linq;
 using System.Threading;
 using System.Reflection;
 using System.Diagnostics;
 using System.Collections.Generic;
 
+using SteamKit2;
 using BakaServer;
 using Newtonsoft.Json;
+
+using Medusa.utils;
+
+using static Medusa.utils.ReportInfo;
 
 namespace Medusa
 {
@@ -53,7 +60,18 @@ namespace Medusa
                 File.WriteAllText(config["AccountsFile"],"[]");
             }
             accountManager = new AccountManager(File.ReadAllText(config["AccountsFile"]));
-            Logger.Info("Started loggin progress...");
+            Properties.Resources.Whitelist.Split('\n').ToList().ForEach((id) =>
+            {
+                if(!id.StartsWith("#"))
+                {
+                    try
+                    {
+                        AccountManager.Whitelist.Add(SteamIdUtil.Parse(id.Split(',')[0]).ConvertToUInt64());
+                    }
+                    catch { }
+                }
+            });
+            Logger.Info("Started login progress...");
             accountManager.ConnectAll();
             File.WriteAllText("server.pid",Process.GetCurrentProcess().Id.ToString());
             long currentTick = 0;
@@ -81,7 +99,7 @@ namespace Medusa
 
         public static bool CheckAccessKey(string data)
         {
-            return AccessKey!="" && AccessKey == data;
+            return AccessKey != "" && AccessKey == data;
         }
 
         public static void ProcessLogs(HttpListenerContext context,IDictionary<string,string> data)
@@ -137,15 +155,10 @@ namespace Medusa
             {
                 result.Add("success",true);
                 var groups = new Dictionary<int,int>();
-                /*
-                foreach(var group in Instance.AccountManager.Accounts)
+                foreach(var group in accountManager.AccountGroups)
                 {
-                    if(group.Key != -1)
-                    {
-                        groups.Add(group.Key,group.Value.Count);
-                    }
+                    groups.Add(group.Key,group.Value.AvailableCount);
                 }
-                */
                 result.Add("groups",groups);
             }
             Server.SendResult(context,Body: JsonConvert.SerializeObject(result));
@@ -153,7 +166,6 @@ namespace Medusa
 
         public static void ProcessSubmit(HttpListenerContext context,IDictionary<string,string> data)
         {
-            /*
             IDictionary<string,object> result = new Dictionary<string,object>();
             if(!data.ContainsKey("key") || !data.ContainsKey("id") || !data.ContainsKey("match") || !data.ContainsKey("group") || !data.ContainsKey("flags"))
             {
@@ -170,35 +182,45 @@ namespace Medusa
                 result.Add("success",false);
                 result.Add("message","参数错误");
             }
-            else if(group == -1 || !Instance.AccountManager.Accounts.ContainsKey(group))
+            else if(group == -1 || !accountManager.AccountGroups.ContainsKey(group))
             {
                 result.Add("success",false);
                 result.Add("message","账户组不存在");
             }
             else
             {
-                var steamID = SteamUtil.Parse(data["id"]);
-                var matchID = SharecodeUtil.Parse(data["match"]);
+                SteamID steamID = SteamIdUtil.Parse(data["id"]);
+                ulong matchID = 0;
+                if(data["match"].StartsWith("steam://"))
+                {
+                    matchID = ShareCode.Decode(data["match"].Substring(61)).MatchId;
+                }
+                else if(data["match"].StartsWith("CSGO-"))
+                {
+                    matchID = ShareCode.Decode(data["match"]).MatchId;
+                }
+                else
+                {
+                    ulong.TryParse(data["match"],out matchID);
+                }
                 if(steamID != null)
                 {
-                    if(matchID == 8)
+                    if(matchID == 0)
                     {
                         result.Add("success",false);
                         result.Add("message","请提供有效的Match ID.");
                     }
-                    else if(Blacklist.IsBlacklisted(steamID))
+                    else if(AccountManager.IsWhitelisted(steamID))
                     {
                         result.Add("success",false);
                         result.Add("message","举报目标在我们的白名单中,这通常说明举报目标不会作弊或是我们的机器人账号之一.");
                     }
                     else
                     {
-                        var info = new ReportInfo
+                        var info = new ReportInfo()
                         {
                             SteamID = steamID,
                             MatchID = matchID,
-                            AppID = TitanAccount.CSGO_APPID,
-
                             AbusiveText = (flags & FLAG_ABUSIVE_TEXT) == FLAG_ABUSIVE_TEXT,
                             AbusiveVoice = (flags & FLAG_ABUSIVE_VOICE) == FLAG_ABUSIVE_VOICE,
                             Griefing = (flags & FLAG_GRIEFING) == FLAG_GRIEFING,
@@ -206,18 +228,18 @@ namespace Medusa
                             WallHacking = (flags & FLAG_WALL_HACKING) == FLAG_WALL_HACKING,
                             OtherHacking = (flags & FLAG_OTHER_HACKING) == FLAG_OTHER_HACKING
                         };
-                        var accounts = accountManager.Accounts[group];
+                        var accounts = accountManager.AccountGroups[group];
                         IDictionary<string,object> account_status = new Dictionary<string,object>();
-                        foreach(var acc in accounts)
+                        foreach(var account in accounts)
                         {
                             try
                             {
-                                Instance.ThreadManager.StartReport(acc,info);
-                                account_status.Add(acc.JsonAccount.Username,"Started");
+                                // TODO: Start Report
+                                account_status.Add(account.Username,"Started");
                             }
                             catch(Exception ex)
                             {
-                                account_status.Add(acc.JsonAccount.Username,ex.Message);
+                                account_status.Add(account.Username,ex.Message);
                             }
                         }
                         result.Add("success",true);
@@ -237,7 +259,6 @@ namespace Medusa
                 }
             }
             Server.SendResult(context,Body: JsonConvert.SerializeObject(result));
-            */
         }
 
         #endregion

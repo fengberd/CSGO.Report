@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 
+using SteamKit2;
 using BakaServer;
 using Newtonsoft.Json;
 
@@ -9,6 +10,13 @@ namespace Medusa
 {
     public class AccountManager
     {
+        public static List<ulong> Whitelist = new List<ulong>();
+
+        public static bool IsWhitelisted(SteamID steamID)
+        {
+            return Whitelist.Contains(steamID.ConvertToUInt64());
+        }
+
         public Dictionary<int,AccountCollection> AccountGroups = new Dictionary<int,AccountCollection>();
 
         public AccountManager(string json)

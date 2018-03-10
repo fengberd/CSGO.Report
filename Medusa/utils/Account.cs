@@ -12,9 +12,9 @@ namespace Medusa.utils
 {
     public class Account
     {
-        public const int APPID = 730;
+        public const int APPID_CSGO = 730;
 
-        public bool Protected = false, Available = false;
+        public bool Protected = false, Available = false, Idle = true;
         public string Username, Password, SharedSecret;
 
         private SteamUser steamUser;
@@ -24,6 +24,7 @@ namespace Medusa.utils
 
         private CallbackManager callbackManager;
 
+        private Queue<ReportInfo> reportQueue = new Queue<ReportInfo>();
         private List<AccountDelayAction> actions = new List<AccountDelayAction>();
 
         public Account(string Username,string Password,bool Protected = false,string SharedSecret = "")
@@ -51,6 +52,24 @@ namespace Medusa.utils
         public void Tick(long Tick)
         {
             callbackManager.RunCallbacks();
+            if(Idle && reportQueue.Count!=0)
+            {
+                var report = reportQueue.Peek();
+                steamGameCoordinator.Send(new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_ClientReportPlayer>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportPlayer)
+                {
+                    Body =
+                    {
+                        account_id = report.SteamID.AccountID,
+                        match_id = report.MatchID,
+                        rpt_aimbot = Convert.ToUInt32(report.AimHacking),
+                        rpt_wallhack = Convert.ToUInt32(report.WallHacking),
+                        rpt_speedhack = Convert.ToUInt32(report.OtherHacking),
+                        rpt_teamharm = Convert.ToUInt32(report.Griefing),
+                        rpt_textabuse = Convert.ToUInt32(report.AbusiveText),
+                        rpt_voiceabuse = Convert.ToUInt32(report.AbusiveVoice)
+                    }
+                },APPID_CSGO);
+            }
             if(Tick % 20 == 0)
             {
                 var to_remove = new List<AccountDelayAction>();
@@ -75,7 +94,7 @@ namespace Medusa.utils
             steamClient.Connect();
             return true;
         }
-
+        
         public void AddDelayAction(int delay,Action action)
         {
             actions.Add(new AccountDelayAction()
@@ -118,10 +137,10 @@ namespace Medusa.utils
                 var clientGamesPlayed = new ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayed);
                 clientGamesPlayed.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed()
                 {
-                    game_id = APPID
+                    game_id = APPID_CSGO
                 });
                 steamClient.Send(clientGamesPlayed);
-                AddDelayAction(2,() => steamGameCoordinator.Send(new ClientGCMsgProtobuf<CMsgClientHello>((uint)EGCBaseClientMsg.k_EMsgGCClientHello),APPID));
+                AddDelayAction(2,() => steamGameCoordinator.Send(new ClientGCMsgProtobuf<CMsgClientHello>((uint)EGCBaseClientMsg.k_EMsgGCClientHello),APPID_CSGO));
                 break;
             case EResult.AccountLogonDenied:
             case EResult.AccountLoginDeniedNeedTwoFactor:
@@ -157,61 +176,78 @@ namespace Medusa.utils
             switch(callback.EMsg)
             {
             case (uint)EGCBaseClientMsg.k_EMsgGCClientWelcome:
-                var welcome = new ClientGCMsgProtobuf<CMsgClientWelcome>(msg);
-                Logger.Debug("[" + Username + "] Connected to " + welcome.Body.location.country + " server.");
-                steamGameCoordinator.Send(new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_MatchmakingClient2GCHello>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchmakingClient2GCHello),APPID);
+                {
+                    var response = new ClientGCMsgProtobuf<CMsgClientWelcome>(msg);
+                    Logger.Debug("[" + Username + "] Connected to " + response.Body.location.country + " server.");
+                    steamGameCoordinator.Send(new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_MatchmakingClient2GCHello>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchmakingClient2GCHello),APPID_CSGO);
+                }
                 break;
             case (uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchmakingGC2ClientHello:
-                var response = new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_MatchmakingGC2ClientHello>(msg);
-                if(response.Body.penalty_reasonSpecified)
                 {
-                    switch(response.Body.penalty_reason)
+                    var response = new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_MatchmakingGC2ClientHello>(msg);
+                    if(response.Body.penalty_reasonSpecified)
                     {
-                    case 10:
-                        Logger.Error("[" + Username + "] Account has been convicted by Overwatch as majorly disruptive.");
-                        return;
-                    case 11:
-                        Logger.Error("[" + Username + "] Account has been convicted by Overwatch as minorly disruptive.");
-                        return;
-                    case 14:
-                        Logger.Error("[" + Username + "] Account is permanently untrusted.");
-                        return;
-                    default:
-                        if(response.Body.penalty_secondsSpecified)
+                        switch(response.Body.penalty_reason)
                         {
-                            var penalty = TimeSpan.FromSeconds(response.Body.penalty_seconds);
-                            if(penalty.Seconds <= 604800)
+                        case 10:
+                            Logger.Error("[" + Username + "] Account has been convicted by Overwatch as majorly disruptive.");
+                            return;
+                        case 11:
+                            Logger.Error("[" + Username + "] Account has been convicted by Overwatch as minorly disruptive.");
+                            return;
+                        case 14:
+                            Logger.Error("[" + Username + "] Account is permanently untrusted.");
+                            return;
+                        default:
+                            if(response.Body.penalty_secondsSpecified)
                             {
-                                string timeString;
-                                if(penalty.Minutes >= 60)
+                                var penalty = TimeSpan.FromSeconds(response.Body.penalty_seconds);
+                                if(penalty.Seconds <= 604800)
                                 {
-                                    timeString = penalty.Hours + " Hours";
-                                }
-                                else
-                                {
-                                    timeString = penalty.Minutes + " Minutes";
-                                }
+                                    string timeString;
+                                    if(penalty.Minutes >= 60)
+                                    {
+                                        timeString = penalty.Hours + " Hours";
+                                    }
+                                    else
+                                    {
+                                        timeString = penalty.Minutes + " Minutes";
+                                    }
 
-                                Logger.Warning("[" + Username + "] Account has received a Matchmaking cooldown.Retrying in " + penalty.Seconds + " seconds.");
-                                steamClient.Disconnect();
-                                AddDelayAction(penalty.Seconds,() => Connect());
-                                return;
+                                    Logger.Warning("[" + Username + "] Account has received a Matchmaking cooldown.Retrying in " + penalty.Seconds + " seconds.");
+                                    steamClient.Disconnect();
+                                    AddDelayAction(penalty.Seconds,() => Connect());
+                                    return;
+                                }
                             }
+                            Logger.Error("[" + Username + "] Account has been permanently banned from CS:GO.");
+                            return;
                         }
-                        Logger.Error("[" + Username + "] Account has been permanently banned from CS:GO.");
+                    }
+                    else if(response.Body.vac_bannedSpecified && response.Body.vac_banned == 2 && !response.Body.penalty_secondsSpecified)
+                    {
+                        Logger.Error("[" + Username + "] Account has been banned by VAC,VOLVO ARE YOU KIDDING ME????");
                         return;
                     }
+                    Available = true;
                 }
-                else if(response.Body.vac_bannedSpecified && response.Body.vac_banned == 2 && !response.Body.penalty_secondsSpecified)
-                {
-                    Logger.Error("[" + Username + "] Account has been banned by VAC,VOLVO ARE YOU KIDDING ME????");
-                    return;
-                }
-                Available = true;
                 break;
             case (uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchList:
             case (uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportResponse:
-            case (uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientCommendPlayerQueryResponse:
+                {
+                    var report = reportQueue.Dequeue();
+                    var response = new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_ClientReportResponse>(msg);
+                    MedusaWebServer.addReportLog(new Dictionary<string,string>()
+                    {
+                        { "username",Username },
+                        { "steamid", report.SteamID.ToString() },
+                        { "match", report.MatchID.ToString() },
+                        { "reportid", response.Body.confirmation_id.ToString() },
+                        { "time", Utils.Time().ToString() },
+                    });
+                    Idle = true;
+                    Logger.Info("[" + Username + "] Successfully reported " + report.SteamID + ",Confirmation ID:" + response.Body.confirmation_id);
+                }
                 break;
             }
         }
