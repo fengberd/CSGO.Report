@@ -36,12 +36,13 @@ namespace Medusa
             Logger.Info("Successfully initialized " + count + " accounts.");
         }
 
-        public int ConnectAll()
+        public int DelayedConnectAll()
         {
+            int delay = 0;
             int success = 0;
             foreach(var group in AccountGroups.Values)
             {
-                success += group.ConnectAll();
+                success += group.DelayedConnectAll(ref delay);
             }
             return success;
         }

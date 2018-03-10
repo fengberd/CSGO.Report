@@ -7,12 +7,13 @@ namespace Medusa.utils
     {
         public int AvailableCount => this.Where((a) => a.Available).Count();
 
-        public int ConnectAll()
+        public int DelayedConnectAll(ref int delay)
         {
             int success = 0;
             foreach(var account in this)
             {
-                account.Connect();
+                account.AddDelayAction(delay,() => account.Connect());
+                delay += 2;
             }
             return success;
         }

@@ -70,9 +70,10 @@ namespace Medusa
                     catch { }
                 }
             });
-            Logger.Info("Started login progress...");
-            accountManager.ConnectAll();
+            Logger.Info("Starting login progress...");
+            accountManager.DelayedConnectAll();
             File.WriteAllText("server.pid",Process.GetCurrentProcess().Id.ToString());
+            Logger.Info("Enter Main Loop...");
             long currentTick = 0;
             while(true)
             {

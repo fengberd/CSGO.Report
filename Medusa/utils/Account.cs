@@ -14,6 +14,8 @@ namespace Medusa.utils
     {
         public const int APPID_CSGO = 730;
 
+        public static Config LoginKeys = new Config("loginKeys.ini");
+
         public int FailCounter = -1;
         public bool Protected = false, Available = false, Idle = true;
         public string Username, Password, SharedSecret;
@@ -47,7 +49,17 @@ namespace Medusa.utils
             callbackManager = new CallbackManager(steamClient);
             callbackManager.Subscribe<SteamClient.ConnectedCallback>(OnConnected);
             callbackManager.Subscribe<SteamClient.DisconnectedCallback>(OnDisconnected);
+            // callbackManager.Subscribe<SteamUser.UpdateMachineAuthCallback>(OnUpdateMachineAuth);
+            callbackManager.Subscribe<SteamClient.CMListCallback>((ev)=>
+            {
+                Logger.Debug("");
+            });
+            callbackManager.Subscribe<SteamClient.ServerListCallback>((ev) =>
+            {
+                Logger.Debug("");
+            });
             callbackManager.Subscribe<SteamUser.LoggedOnCallback>(OnLoggedOn);
+            callbackManager.Subscribe<SteamUser.LoginKeyCallback>((callback) => LoginKeys[Username] = callback.LoginKey);
             callbackManager.Subscribe<SteamGameCoordinator.MessageCallback>(OnGCMessage);
         }
 
@@ -89,7 +101,7 @@ namespace Medusa.utils
                 var to_remove = new List<AccountDelayAction>();
                 foreach(var action in actions)
                 {
-                    if(--action.SecondsRemain == 0)
+                    if(--action.SecondsRemain <= 0)
                     {
                         action.Action.Invoke();
                         to_remove.Add(action);
@@ -105,6 +117,7 @@ namespace Medusa.utils
             {
                 return false;
             }
+            Logger.Debug("[" + Username + "] Connecting...");
             steamClient.Connect();
             return true;
         }
@@ -120,19 +133,28 @@ namespace Medusa.utils
 
         #region Steam Callbacks
 
-        public void OnConnected(SteamClient.ConnectedCallback callback)
+        protected void OnUpdateMachineAuth(SteamUser.UpdateMachineAuthCallback callback)
+        {
+
+        }
+
+        protected void OnConnected(SteamClient.ConnectedCallback callback)
         {
             Logger.Info("[" + Username + "] Connected to steam.");
             var random = new Random();
             steamUser.LogOn(new SteamUser.LogOnDetails()
             {
                 Username = Username,
-                Password = Password,
-                LoginID = ((uint)random.Next(1 << 30) << 2) | (uint)random.Next(1 << 2)
+                Password = LoginKeys.ContainsKey(Username) ? null : Password,
+                LoginID = ((uint)random.Next(1 << 30) << 2) | (uint)random.Next(1 << 2),
+                LoginKey = LoginKeys.ContainsKey(Username) ? LoginKeys[Username] : null,
+                ShouldRememberPassword = true,
+                ClientOSType = EOSType.Windows10,
+                ClientLanguage = "en-US"
             });
         }
 
-        public void OnDisconnected(SteamClient.DisconnectedCallback callback)
+        protected void OnDisconnected(SteamClient.DisconnectedCallback callback)
         {
             if(!callback.UserInitiated && Available)
             {
@@ -141,7 +163,7 @@ namespace Medusa.utils
             }
         }
 
-        public void OnLoggedOn(SteamUser.LoggedOnCallback callback)
+        protected void OnLoggedOn(SteamUser.LoggedOnCallback callback)
         {
             switch(callback.Result)
             {
@@ -184,7 +206,7 @@ namespace Medusa.utils
             }
         }
 
-        public void OnGCMessage(SteamGameCoordinator.MessageCallback callback)
+        protected void OnGCMessage(SteamGameCoordinator.MessageCallback callback)
         {
             var msg = callback.Message;
             switch(callback.EMsg)
