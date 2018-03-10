@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2026
+VisualStudioVersion = 15.0.27130.2036
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RegisterAssistance", "RegisterAssistance\RegisterAssistance.csproj", "{3D2454A3-21CD-43AE-8B43-EDA023104D02}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Medusa", "Medusa\Medusa.csproj", "{BE453FE0-015A-4F01-A1B8-5910D3359B1B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{3D2454A3-21CD-43AE-8B43-EDA023104D02}.Debug|Any CPU.Build.0 = Debug|x64
 		{3D2454A3-21CD-43AE-8B43-EDA023104D02}.Release|Any CPU.ActiveCfg = Release|x64
 		{3D2454A3-21CD-43AE-8B43-EDA023104D02}.Release|Any CPU.Build.0 = Release|x64
+		{BE453FE0-015A-4F01-A1B8-5910D3359B1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BE453FE0-015A-4F01-A1B8-5910D3359B1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BE453FE0-015A-4F01-A1B8-5910D3359B1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BE453FE0-015A-4F01-A1B8-5910D3359B1B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

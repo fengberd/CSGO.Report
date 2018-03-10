@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // 有关程序集的一般信息由以下
 // 控制。更改这些特性值可修改
 // 与程序集关联的信息。
-[assembly: AssemblyTitle("CSGO.Report - Register Assistance")]
-[assembly: AssemblyDescription("Steam Account Registration Assistant")]
+[assembly: AssemblyTitle("CSGO.Report - Medusa")]
+[assembly: AssemblyDescription("Report Daemon")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("FENGberd")]
-[assembly: AssemblyProduct("Register Assistance")]
+[assembly: AssemblyProduct("Medusa")]
 [assembly: AssemblyCopyright("Copyright © FENGberd 2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // 如果此项目向 COM 公开，则下列 GUID 用于类型库的 ID
-[assembly: Guid("3d2454a3-21cd-43ae-8b43-eda023104d02")]
+[assembly: Guid("be453fe0-015a-4f01-a1b8-5910d3359b1b")]
 
 // 程序集的版本信息由下列四个值组成: 
 //
@@ -32,5 +32,5 @@ using System.Runtime.InteropServices;
 // 可以指定所有值，也可以使用以下所示的 "*" 预置版本号和修订号
 // 方法是按如下所示使用“*”: :
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("2.0.0.0")]
-[assembly: AssemblyFileVersion("2.0.0.0")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]

@@ -102,6 +102,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="BakaServer">
+      <HintPath>..\..\ZXDA\BakaServer\bin\Release\BakaServer.dll</HintPath>
+    </Reference>
     <Reference Include="S22.Imap, Version=3.6.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\S22.Imap.3.6.0.0\lib\net40\S22.Imap.dll</HintPath>
     </Reference>
