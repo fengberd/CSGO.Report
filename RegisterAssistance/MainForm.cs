@@ -150,10 +150,20 @@ namespace RegisterAssistance
                 {
                     return;
                 }
-                browser.MainFrame.ExecuteJavaScriptAsync("if(!jQuery('#none_authenticator_check').prop('checked'))" +
-                    "{" +
-                        "document.forms['none_authenticator_form'].submit();" +
-                    "}");
+                browser.MainFrame.EvaluateScriptAsync("jQuery('#none_authenticator_check').prop('checked')?'true':'false'").ContinueWith((r) =>
+                {
+                    if(!r.IsFaulted && r.Result.Success)
+                    {
+                        if(r.Result.Result.ToString() == "false")
+                        {
+                            browser.MainFrame.ExecuteJavaScriptAsync("document.forms['none_authenticator_form'].submit();");
+                        }
+                        else if(checkBox_auto_go_next_account.Checked && button8.Enabled)
+                        {
+                            button8.PerformClick();
+                        }
+                    }
+                });
                 break;
             case "store.steampowered.com/twofactor/manage_action":
                 if(!checkBox_auto_disable_steam_guard.Checked)

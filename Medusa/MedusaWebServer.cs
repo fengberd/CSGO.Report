@@ -40,15 +40,6 @@ namespace Medusa
                 case "/":
                     SendError(context,"520 I Love You");
                     break;
-                case "/status":
-                    Dictionary<string,object> result = new Dictionary<string,object>
-                    {
-                        { "success",true },
-                        { "message","" },
-                        { "time",Utils.Time() },
-                    };
-                    SendResult(context,Body: JsonConvert.SerializeObject(result));
-                    break;
                 case "/favicon.ico":
                     if(File.Exists("icon.png"))
                     {
@@ -61,7 +52,7 @@ namespace Medusa
                     }
                     break;
                 case "/log":
-                case "/groups":
+                case "/status":
                 case "/submit":
                     SendError(context,StatusCode.E_405);
                     break;
@@ -80,14 +71,13 @@ namespace Medusa
                     case "/log":
                         Program.ProcessLogs(context,data);
                         break;
-                    case "/groups":
-                        Program.ProcessGroups(context,data);
+                    case "/status":
+                        Program.ProcessStatus(context,data);
                         break;
                     case "/submit":
                         Program.ProcessSubmit(context,data);
                         break;
                     case "/":
-                    case "/status":
                     case "/favicon.ico":
                         SendError(context,StatusCode.E_405);
                         break;

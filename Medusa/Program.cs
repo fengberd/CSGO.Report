@@ -101,6 +101,36 @@ namespace Medusa
             return AccessKey != "" && AccessKey == data;
         }
 
+        public static void ProcessStatus(HttpListenerContext context,IDictionary<string,string> data)
+        {
+            IDictionary<string,object> result = new Dictionary<string,object>();
+            if(!data.ContainsKey("key"))
+            {
+                result.Add("success",false);
+                result.Add("message","参数错误");
+            }
+            else if(!CheckAccessKey(data["key"]))
+            {
+                result.Add("success",false);
+                result.Add("message","Access Denied.");
+            }
+            else
+            {
+                result.Add("success",true);
+                int online = 0;
+                var groups = new Dictionary<int,int>();
+                foreach(var kv in accountManager.AccountGroups)
+                {
+                    online += kv.Value.AvailableCount;
+                    groups.Add(kv.Key,kv.Value.AvailableCount);
+                }
+                result.Add("groups",groups);
+                result.Add("online",online);
+                result.Add("uptime",GetUptime());
+            }
+            Server.SendResult(context,Body: JsonConvert.SerializeObject(result));
+        }
+
         public static void ProcessLogs(HttpListenerContext context,IDictionary<string,string> data)
         {
             IDictionary<string,object> result = new Dictionary<string,object>();
@@ -136,33 +166,7 @@ namespace Medusa
             }
             Server.SendResult(context,Body: JsonConvert.SerializeObject(result));
         }
-
-        public static void ProcessGroups(HttpListenerContext context,IDictionary<string,string> data)
-        {
-            IDictionary<string,object> result = new Dictionary<string,object>();
-            if(!data.ContainsKey("key"))
-            {
-                result.Add("success",false);
-                result.Add("message","参数错误");
-            }
-            else if(!CheckAccessKey(data["key"]))
-            {
-                result.Add("success",false);
-                result.Add("message","Access Denied.");
-            }
-            else
-            {
-                result.Add("success",true);
-                var groups = new Dictionary<int,int>();
-                foreach(var group in accountManager.AccountGroups)
-                {
-                    groups.Add(group.Key,group.Value.AvailableCount);
-                }
-                result.Add("groups",groups);
-            }
-            Server.SendResult(context,Body: JsonConvert.SerializeObject(result));
-        }
-
+        
         public static void ProcessSubmit(HttpListenerContext context,IDictionary<string,string> data)
         {
             IDictionary<string,object> result = new Dictionary<string,object>();
