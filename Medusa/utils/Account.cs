@@ -14,6 +14,7 @@ namespace Medusa.utils
     {
         public const int APPID_CSGO = 730;
 
+        public int FailCounter = -1;
         public bool Protected = false, Available = false, Idle = true;
         public string Username, Password, SharedSecret;
 
@@ -52,23 +53,35 @@ namespace Medusa.utils
         public void Tick(long Tick)
         {
             callbackManager.RunCallbacks();
-            if(Idle && reportQueue.Count!=0)
+            if(Idle)
             {
-                var report = reportQueue.Peek();
-                steamGameCoordinator.Send(new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_ClientReportPlayer>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportPlayer)
+                if(reportQueue.Count != 0)
                 {
-                    Body =
+                    var report = reportQueue.Peek();
+                    steamGameCoordinator.Send(new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_ClientReportPlayer>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportPlayer)
                     {
-                        account_id = report.SteamID.AccountID,
-                        match_id = report.MatchID,
-                        rpt_aimbot = Convert.ToUInt32(report.AimHacking),
-                        rpt_wallhack = Convert.ToUInt32(report.WallHacking),
-                        rpt_speedhack = Convert.ToUInt32(report.OtherHacking),
-                        rpt_teamharm = Convert.ToUInt32(report.Griefing),
-                        rpt_textabuse = Convert.ToUInt32(report.AbusiveText),
-                        rpt_voiceabuse = Convert.ToUInt32(report.AbusiveVoice)
-                    }
-                },APPID_CSGO);
+                        Body =
+                        {
+                            account_id = report.SteamID.AccountID,
+                            match_id = report.MatchID,
+                            rpt_aimbot = Convert.ToUInt32(report.AimHacking),
+                            rpt_wallhack = Convert.ToUInt32(report.WallHacking),
+                            rpt_speedhack = Convert.ToUInt32(report.OtherHacking),
+                            rpt_teamharm = Convert.ToUInt32(report.Griefing),
+                            rpt_textabuse = Convert.ToUInt32(report.AbusiveText),
+                            rpt_voiceabuse = Convert.ToUInt32(report.AbusiveVoice)
+                        }
+                    },APPID_CSGO);
+                    FailCounter = 30 * 20; // Fail the action if no response in 30s.
+                    Idle = false;
+                }
+            }
+            else if(FailCounter > -1 && --FailCounter <= 0)
+            {
+                Logger.Error("[" + Username + "] No report response recieved.Dropping the failed report info.");
+                FailCounter = -1;
+                Idle = true;
+                reportQueue.Dequeue();
             }
             if(Tick % 20 == 0)
             {
@@ -94,7 +107,7 @@ namespace Medusa.utils
             steamClient.Connect();
             return true;
         }
-        
+
         public void AddDelayAction(int delay,Action action)
         {
             actions.Add(new AccountDelayAction()
@@ -232,7 +245,6 @@ namespace Medusa.utils
                     Available = true;
                 }
                 break;
-            case (uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchList:
             case (uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportResponse:
                 {
                     var report = reportQueue.Dequeue();
@@ -245,6 +257,7 @@ namespace Medusa.utils
                         { "reportid", response.Body.confirmation_id.ToString() },
                         { "time", Utils.Time().ToString() },
                     });
+                    FailCounter = -1;
                     Idle = true;
                     Logger.Info("[" + Username + "] Successfully reported " + report.SteamID + ",Confirmation ID:" + response.Body.confirmation_id);
                 }
