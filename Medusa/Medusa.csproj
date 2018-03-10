@@ -82,6 +82,7 @@
     <Compile Include="utils\AccountCollection.cs" />
     <Compile Include="utils\AccountDelayAction.cs" />
     <Compile Include="utils\AccountJson.cs" />
+    <Compile Include="utils\ReportInfo.cs" />
     <Compile Include="utils\ShareCode.cs" />
     <Compile Include="utils\SteamIdUtil.cs" />
   </ItemGroup>

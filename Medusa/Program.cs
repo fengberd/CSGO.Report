@@ -12,7 +12,6 @@ using BakaServer;
 using Newtonsoft.Json;
 
 using Medusa.utils;
-
 using static Medusa.utils.ReportInfo;
 
 namespace Medusa
@@ -229,21 +228,14 @@ namespace Medusa
                             OtherHacking = (flags & FLAG_OTHER_HACKING) == FLAG_OTHER_HACKING
                         };
                         var accounts = accountManager.AccountGroups[group];
-                        IDictionary<string,object> account_status = new Dictionary<string,object>();
+                        List<string> accounts_name = new List<string>();
                         foreach(var account in accounts)
                         {
-                            try
-                            {
-                                // TODO: Start Report
-                                account_status.Add(account.Username,"Started");
-                            }
-                            catch(Exception ex)
-                            {
-                                account_status.Add(account.Username,ex.Message);
-                            }
+                            account.reportQueue.Enqueue(info);
+                            accounts_name.Add(account.Username);
                         }
                         result.Add("success",true);
-                        result.Add("accounts",account_status);
+                        result.Add("accounts",accounts_name);
                         result.Add("message","Abusive Text:" + info.AbusiveText + "<br />" +
                             "Abusive Voice:" + info.AbusiveVoice + "<br />" +
                             "Griefing:" + info.Griefing + "<br />" +

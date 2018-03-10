@@ -36,6 +36,7 @@ namespace RegisterAssistance
             this.button8 = new System.Windows.Forms.Button();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage_steam = new System.Windows.Forms.TabPage();
+            this.panel_mail = new System.Windows.Forms.Panel();
             this.textBox_url = new System.Windows.Forms.TextBox();
             this.button10 = new System.Windows.Forms.Button();
             this.button7 = new System.Windows.Forms.Button();
@@ -45,7 +46,6 @@ namespace RegisterAssistance
             this.button4 = new System.Windows.Forms.Button();
             this.button5 = new System.Windows.Forms.Button();
             this.checkBox_auto_get_vcode = new System.Windows.Forms.CheckBox();
-            this.label1 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.radioButton_default_register = new System.Windows.Forms.RadioButton();
             this.radioButton_default_login = new System.Windows.Forms.RadioButton();
@@ -59,11 +59,26 @@ namespace RegisterAssistance
             this.checkBox_auto_profile = new System.Windows.Forms.CheckBox();
             this.checkBox_auto_login = new System.Windows.Forms.CheckBox();
             this.timer_get_vcode = new System.Windows.Forms.Timer(this.components);
-            this.panel_mail = new System.Windows.Forms.Panel();
+            this.button6 = new System.Windows.Forms.Button();
+            this.checkBox_auto_disable_steam_guard = new System.Windows.Forms.CheckBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.flowLayoutPanel2 = new System.Windows.Forms.FlowLayoutPanel();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.flowLayoutPanel3 = new System.Windows.Forms.FlowLayoutPanel();
+            this.checkBox_auto_go_2fa = new System.Windows.Forms.CheckBox();
+            this.checkBox_direct_go_2fa = new System.Windows.Forms.CheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPage_steam.SuspendLayout();
             this.tabPage_settings.SuspendLayout();
             this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
+            this.flowLayoutPanel1.SuspendLayout();
+            this.groupBox3.SuspendLayout();
+            this.flowLayoutPanel2.SuspendLayout();
+            this.groupBox4.SuspendLayout();
+            this.flowLayoutPanel3.SuspendLayout();
             this.SuspendLayout();
             // 
             // button1
@@ -132,6 +147,7 @@ namespace RegisterAssistance
             // 
             // tabPage_steam
             // 
+            this.tabPage_steam.Controls.Add(this.button6);
             this.tabPage_steam.Controls.Add(this.panel_mail);
             this.tabPage_steam.Controls.Add(this.textBox_url);
             this.tabPage_steam.Controls.Add(this.button10);
@@ -149,6 +165,14 @@ namespace RegisterAssistance
             this.tabPage_steam.TabIndex = 0;
             this.tabPage_steam.Text = "Steam";
             this.tabPage_steam.UseVisualStyleBackColor = true;
+            // 
+            // panel_mail
+            // 
+            this.panel_mail.Location = new System.Drawing.Point(833, 534);
+            this.panel_mail.Name = "panel_mail";
+            this.panel_mail.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.panel_mail.Size = new System.Drawing.Size(10, 23);
+            this.panel_mail.TabIndex = 0;
             // 
             // textBox_url
             // 
@@ -187,21 +211,10 @@ namespace RegisterAssistance
             // 
             // tabPage_settings
             // 
-            this.tabPage_settings.Controls.Add(this.checkBox_auto_go_next_account);
-            this.tabPage_settings.Controls.Add(this.button4);
-            this.tabPage_settings.Controls.Add(this.button5);
-            this.tabPage_settings.Controls.Add(this.checkBox_auto_get_vcode);
-            this.tabPage_settings.Controls.Add(this.label1);
+            this.tabPage_settings.Controls.Add(this.groupBox4);
+            this.tabPage_settings.Controls.Add(this.groupBox3);
+            this.tabPage_settings.Controls.Add(this.groupBox2);
             this.tabPage_settings.Controls.Add(this.groupBox1);
-            this.tabPage_settings.Controls.Add(this.checkBox_override_profile_check);
-            this.tabPage_settings.Controls.Add(this.checkBox_auto_go_group);
-            this.tabPage_settings.Controls.Add(this.checkBox_auto_go_active);
-            this.tabPage_settings.Controls.Add(this.checkBox_auto_go_profile);
-            this.tabPage_settings.Controls.Add(this.checkBox_auto_group);
-            this.tabPage_settings.Controls.Add(this.checkBox_auto_avatar);
-            this.tabPage_settings.Controls.Add(this.checkBox_auto_cdk);
-            this.tabPage_settings.Controls.Add(this.checkBox_auto_profile);
-            this.tabPage_settings.Controls.Add(this.checkBox_auto_login);
             this.tabPage_settings.Location = new System.Drawing.Point(4, 22);
             this.tabPage_settings.Name = "tabPage_settings";
             this.tabPage_settings.Padding = new System.Windows.Forms.Padding(3);
@@ -215,17 +228,17 @@ namespace RegisterAssistance
             this.checkBox_auto_go_next_account.AutoSize = true;
             this.checkBox_auto_go_next_account.Checked = true;
             this.checkBox_auto_go_next_account.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_auto_go_next_account.Location = new System.Drawing.Point(758, 28);
+            this.checkBox_auto_go_next_account.Location = new System.Drawing.Point(3, 91);
             this.checkBox_auto_go_next_account.Name = "checkBox_auto_go_next_account";
-            this.checkBox_auto_go_next_account.Size = new System.Drawing.Size(228, 16);
+            this.checkBox_auto_go_next_account.Size = new System.Drawing.Size(282, 16);
             this.checkBox_auto_go_next_account.TabIndex = 14;
-            this.checkBox_auto_go_next_account.Text = "Goto Next Account After Join Group";
+            this.checkBox_auto_go_next_account.Text = "Goto Next Account After Disable Steam Guard";
             this.checkBox_auto_go_next_account.UseVisualStyleBackColor = true;
             // 
             // button4
             // 
             this.button4.Font = new System.Drawing.Font("宋体", 9F);
-            this.button4.Location = new System.Drawing.Point(255, 72);
+            this.button4.Location = new System.Drawing.Point(102, 69);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(93, 23);
             this.button4.TabIndex = 13;
@@ -235,7 +248,7 @@ namespace RegisterAssistance
             // button5
             // 
             this.button5.Font = new System.Drawing.Font("宋体", 9F);
-            this.button5.Location = new System.Drawing.Point(156, 72);
+            this.button5.Location = new System.Drawing.Point(3, 69);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(93, 23);
             this.button5.TabIndex = 12;
@@ -248,7 +261,7 @@ namespace RegisterAssistance
             this.checkBox_auto_get_vcode.AutoSize = true;
             this.checkBox_auto_get_vcode.Checked = true;
             this.checkBox_auto_get_vcode.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_auto_get_vcode.Location = new System.Drawing.Point(170, 50);
+            this.checkBox_auto_get_vcode.Location = new System.Drawing.Point(3, 47);
             this.checkBox_auto_get_vcode.Name = "checkBox_auto_get_vcode";
             this.checkBox_auto_get_vcode.Size = new System.Drawing.Size(126, 16);
             this.checkBox_auto_get_vcode.TabIndex = 11;
@@ -256,20 +269,11 @@ namespace RegisterAssistance
             this.checkBox_auto_get_vcode.UseVisualStyleBackColor = true;
             this.checkBox_auto_get_vcode.CheckedChanged += new System.EventHandler(this.checkBox_auto_get_vcode_CheckedChanged);
             // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(6, 129);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(275, 12);
-            this.label1.TabIndex = 10;
-            this.label1.Text = "↑↑↑如果你不知道这些东西是干嘛的,别点就对了";
-            // 
             // groupBox1
             // 
             this.groupBox1.Controls.Add(this.radioButton_default_register);
             this.groupBox1.Controls.Add(this.radioButton_default_login);
-            this.groupBox1.Location = new System.Drawing.Point(8, 72);
+            this.groupBox1.Location = new System.Drawing.Point(871, 6);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(142, 42);
             this.groupBox1.TabIndex = 9;
@@ -301,7 +305,7 @@ namespace RegisterAssistance
             // checkBox_override_profile_check
             // 
             this.checkBox_override_profile_check.AutoSize = true;
-            this.checkBox_override_profile_check.Location = new System.Drawing.Point(8, 50);
+            this.checkBox_override_profile_check.Location = new System.Drawing.Point(3, 3);
             this.checkBox_override_profile_check.Name = "checkBox_override_profile_check";
             this.checkBox_override_profile_check.Size = new System.Drawing.Size(156, 16);
             this.checkBox_override_profile_check.TabIndex = 8;
@@ -313,7 +317,7 @@ namespace RegisterAssistance
             this.checkBox_auto_go_group.AutoSize = true;
             this.checkBox_auto_go_group.Checked = true;
             this.checkBox_auto_go_group.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_auto_go_group.Location = new System.Drawing.Point(518, 28);
+            this.checkBox_auto_go_group.Location = new System.Drawing.Point(3, 47);
             this.checkBox_auto_go_group.Name = "checkBox_auto_go_group";
             this.checkBox_auto_go_group.Size = new System.Drawing.Size(234, 16);
             this.checkBox_auto_go_group.TabIndex = 7;
@@ -325,7 +329,7 @@ namespace RegisterAssistance
             this.checkBox_auto_go_active.AutoSize = true;
             this.checkBox_auto_go_active.Checked = true;
             this.checkBox_auto_go_active.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_auto_go_active.Location = new System.Drawing.Point(224, 28);
+            this.checkBox_auto_go_active.Location = new System.Drawing.Point(3, 25);
             this.checkBox_auto_go_active.Name = "checkBox_auto_go_active";
             this.checkBox_auto_go_active.Size = new System.Drawing.Size(288, 16);
             this.checkBox_auto_go_active.TabIndex = 6;
@@ -337,7 +341,7 @@ namespace RegisterAssistance
             this.checkBox_auto_go_profile.AutoSize = true;
             this.checkBox_auto_go_profile.Checked = true;
             this.checkBox_auto_go_profile.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_auto_go_profile.Location = new System.Drawing.Point(8, 28);
+            this.checkBox_auto_go_profile.Location = new System.Drawing.Point(3, 3);
             this.checkBox_auto_go_profile.Name = "checkBox_auto_go_profile";
             this.checkBox_auto_go_profile.Size = new System.Drawing.Size(210, 16);
             this.checkBox_auto_go_profile.TabIndex = 5;
@@ -349,7 +353,7 @@ namespace RegisterAssistance
             this.checkBox_auto_group.AutoSize = true;
             this.checkBox_auto_group.Checked = true;
             this.checkBox_auto_group.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_auto_group.Location = new System.Drawing.Point(626, 6);
+            this.checkBox_auto_group.Location = new System.Drawing.Point(3, 91);
             this.checkBox_auto_group.Name = "checkBox_auto_group";
             this.checkBox_auto_group.Size = new System.Drawing.Size(114, 16);
             this.checkBox_auto_group.TabIndex = 4;
@@ -361,7 +365,7 @@ namespace RegisterAssistance
             this.checkBox_auto_avatar.AutoSize = true;
             this.checkBox_auto_avatar.Checked = true;
             this.checkBox_auto_avatar.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_auto_avatar.Location = new System.Drawing.Point(218, 6);
+            this.checkBox_auto_avatar.Location = new System.Drawing.Point(3, 69);
             this.checkBox_auto_avatar.Name = "checkBox_auto_avatar";
             this.checkBox_auto_avatar.Size = new System.Drawing.Size(132, 16);
             this.checkBox_auto_avatar.TabIndex = 3;
@@ -373,7 +377,7 @@ namespace RegisterAssistance
             this.checkBox_auto_cdk.AutoSize = true;
             this.checkBox_auto_cdk.Checked = true;
             this.checkBox_auto_cdk.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_auto_cdk.Location = new System.Drawing.Point(98, 6);
+            this.checkBox_auto_cdk.Location = new System.Drawing.Point(3, 47);
             this.checkBox_auto_cdk.Name = "checkBox_auto_cdk";
             this.checkBox_auto_cdk.Size = new System.Drawing.Size(114, 16);
             this.checkBox_auto_cdk.TabIndex = 2;
@@ -385,7 +389,7 @@ namespace RegisterAssistance
             this.checkBox_auto_profile.AutoSize = true;
             this.checkBox_auto_profile.Checked = true;
             this.checkBox_auto_profile.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_auto_profile.Location = new System.Drawing.Point(356, 6);
+            this.checkBox_auto_profile.Location = new System.Drawing.Point(3, 25);
             this.checkBox_auto_profile.Name = "checkBox_auto_profile";
             this.checkBox_auto_profile.Size = new System.Drawing.Size(264, 16);
             this.checkBox_auto_profile.TabIndex = 1;
@@ -397,7 +401,7 @@ namespace RegisterAssistance
             this.checkBox_auto_login.AutoSize = true;
             this.checkBox_auto_login.Checked = true;
             this.checkBox_auto_login.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_auto_login.Location = new System.Drawing.Point(8, 6);
+            this.checkBox_auto_login.Location = new System.Drawing.Point(3, 3);
             this.checkBox_auto_login.Name = "checkBox_auto_login";
             this.checkBox_auto_login.Size = new System.Drawing.Size(84, 16);
             this.checkBox_auto_login.TabIndex = 0;
@@ -409,13 +413,121 @@ namespace RegisterAssistance
             this.timer_get_vcode.Interval = 550;
             this.timer_get_vcode.Tick += new System.EventHandler(this.timer_get_vcode_Tick);
             // 
-            // panel_mail
+            // button6
             // 
-            this.panel_mail.Location = new System.Drawing.Point(833, 534);
-            this.panel_mail.Name = "panel_mail";
-            this.panel_mail.RightToLeft = System.Windows.Forms.RightToLeft.No;
-            this.panel_mail.Size = new System.Drawing.Size(10, 23);
-            this.panel_mail.TabIndex = 0;
+            this.button6.Location = new System.Drawing.Point(598, 534);
+            this.button6.Name = "button6";
+            this.button6.Size = new System.Drawing.Size(112, 23);
+            this.button6.TabIndex = 14;
+            this.button6.Text = "Two Factor Page";
+            this.button6.UseVisualStyleBackColor = true;
+            this.button6.Click += new System.EventHandler(this.button6_Click);
+            // 
+            // checkBox_auto_disable_steam_guard
+            // 
+            this.checkBox_auto_disable_steam_guard.AutoSize = true;
+            this.checkBox_auto_disable_steam_guard.Checked = true;
+            this.checkBox_auto_disable_steam_guard.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBox_auto_disable_steam_guard.Location = new System.Drawing.Point(3, 113);
+            this.checkBox_auto_disable_steam_guard.Name = "checkBox_auto_disable_steam_guard";
+            this.checkBox_auto_disable_steam_guard.Size = new System.Drawing.Size(168, 16);
+            this.checkBox_auto_disable_steam_guard.TabIndex = 15;
+            this.checkBox_auto_disable_steam_guard.Text = "Auto Disable Steam Guard";
+            this.checkBox_auto_disable_steam_guard.UseVisualStyleBackColor = true;
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.flowLayoutPanel1);
+            this.groupBox2.Location = new System.Drawing.Point(6, 6);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(318, 185);
+            this.groupBox2.TabIndex = 16;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Auto Fill && Click";
+            // 
+            // flowLayoutPanel1
+            // 
+            this.flowLayoutPanel1.Controls.Add(this.checkBox_auto_login);
+            this.flowLayoutPanel1.Controls.Add(this.checkBox_auto_profile);
+            this.flowLayoutPanel1.Controls.Add(this.checkBox_auto_cdk);
+            this.flowLayoutPanel1.Controls.Add(this.checkBox_auto_avatar);
+            this.flowLayoutPanel1.Controls.Add(this.checkBox_auto_group);
+            this.flowLayoutPanel1.Controls.Add(this.checkBox_auto_disable_steam_guard);
+            this.flowLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flowLayoutPanel1.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            this.flowLayoutPanel1.Location = new System.Drawing.Point(3, 17);
+            this.flowLayoutPanel1.Name = "flowLayoutPanel1";
+            this.flowLayoutPanel1.Size = new System.Drawing.Size(312, 165);
+            this.flowLayoutPanel1.TabIndex = 0;
+            // 
+            // groupBox3
+            // 
+            this.groupBox3.Controls.Add(this.flowLayoutPanel2);
+            this.groupBox3.Location = new System.Drawing.Point(330, 6);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(320, 185);
+            this.groupBox3.TabIndex = 17;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "Auto Nevigate";
+            // 
+            // flowLayoutPanel2
+            // 
+            this.flowLayoutPanel2.Controls.Add(this.checkBox_auto_go_profile);
+            this.flowLayoutPanel2.Controls.Add(this.checkBox_auto_go_active);
+            this.flowLayoutPanel2.Controls.Add(this.checkBox_auto_go_group);
+            this.flowLayoutPanel2.Controls.Add(this.checkBox_auto_go_2fa);
+            this.flowLayoutPanel2.Controls.Add(this.checkBox_auto_go_next_account);
+            this.flowLayoutPanel2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flowLayoutPanel2.FlowDirection = System.Windows.Forms.FlowDirection.TopDown;
+            this.flowLayoutPanel2.Location = new System.Drawing.Point(3, 17);
+            this.flowLayoutPanel2.Name = "flowLayoutPanel2";
+            this.flowLayoutPanel2.Size = new System.Drawing.Size(314, 165);
+            this.flowLayoutPanel2.TabIndex = 0;
+            // 
+            // groupBox4
+            // 
+            this.groupBox4.Controls.Add(this.flowLayoutPanel3);
+            this.groupBox4.Location = new System.Drawing.Point(656, 6);
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Size = new System.Drawing.Size(209, 185);
+            this.groupBox4.TabIndex = 17;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "Misc";
+            // 
+            // flowLayoutPanel3
+            // 
+            this.flowLayoutPanel3.Controls.Add(this.checkBox_override_profile_check);
+            this.flowLayoutPanel3.Controls.Add(this.checkBox_direct_go_2fa);
+            this.flowLayoutPanel3.Controls.Add(this.checkBox_auto_get_vcode);
+            this.flowLayoutPanel3.Controls.Add(this.button5);
+            this.flowLayoutPanel3.Controls.Add(this.button4);
+            this.flowLayoutPanel3.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flowLayoutPanel3.Location = new System.Drawing.Point(3, 17);
+            this.flowLayoutPanel3.Name = "flowLayoutPanel3";
+            this.flowLayoutPanel3.Size = new System.Drawing.Size(203, 165);
+            this.flowLayoutPanel3.TabIndex = 0;
+            // 
+            // checkBox_auto_go_2fa
+            // 
+            this.checkBox_auto_go_2fa.AutoSize = true;
+            this.checkBox_auto_go_2fa.Checked = true;
+            this.checkBox_auto_go_2fa.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBox_auto_go_2fa.Location = new System.Drawing.Point(3, 69);
+            this.checkBox_auto_go_2fa.Name = "checkBox_auto_go_2fa";
+            this.checkBox_auto_go_2fa.Size = new System.Drawing.Size(240, 16);
+            this.checkBox_auto_go_2fa.TabIndex = 14;
+            this.checkBox_auto_go_2fa.Text = "Navigate to 2Factor After Join Group";
+            this.checkBox_auto_go_2fa.UseVisualStyleBackColor = true;
+            // 
+            // checkBox_direct_go_2fa
+            // 
+            this.checkBox_direct_go_2fa.AutoSize = true;
+            this.checkBox_direct_go_2fa.Location = new System.Drawing.Point(3, 25);
+            this.checkBox_direct_go_2fa.Name = "checkBox_direct_go_2fa";
+            this.checkBox_direct_go_2fa.Size = new System.Drawing.Size(150, 16);
+            this.checkBox_direct_go_2fa.TabIndex = 14;
+            this.checkBox_direct_go_2fa.Text = "Direct go to 2FA Page";
+            this.checkBox_direct_go_2fa.UseVisualStyleBackColor = true;
             // 
             // MainForm
             // 
@@ -433,9 +545,17 @@ namespace RegisterAssistance
             this.tabPage_steam.ResumeLayout(false);
             this.tabPage_steam.PerformLayout();
             this.tabPage_settings.ResumeLayout(false);
-            this.tabPage_settings.PerformLayout();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
+            this.flowLayoutPanel1.ResumeLayout(false);
+            this.flowLayoutPanel1.PerformLayout();
+            this.groupBox3.ResumeLayout(false);
+            this.flowLayoutPanel2.ResumeLayout(false);
+            this.flowLayoutPanel2.PerformLayout();
+            this.groupBox4.ResumeLayout(false);
+            this.flowLayoutPanel3.ResumeLayout(false);
+            this.flowLayoutPanel3.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -464,7 +584,6 @@ namespace RegisterAssistance
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.RadioButton radioButton_default_register;
         private System.Windows.Forms.RadioButton radioButton_default_login;
-        private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Timer timer_get_vcode;
         private System.Windows.Forms.CheckBox checkBox_auto_get_vcode;
         private System.Windows.Forms.TextBox textBox_url;
@@ -472,5 +591,15 @@ namespace RegisterAssistance
         private System.Windows.Forms.Button button4;
         private System.Windows.Forms.CheckBox checkBox_auto_go_next_account;
         private System.Windows.Forms.Panel panel_mail;
+        private System.Windows.Forms.Button button6;
+        private System.Windows.Forms.CheckBox checkBox_auto_disable_steam_guard;
+        private System.Windows.Forms.GroupBox groupBox4;
+        private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel3;
+        private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel2;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
+        private System.Windows.Forms.CheckBox checkBox_auto_go_2fa;
+        private System.Windows.Forms.CheckBox checkBox_direct_go_2fa;
     }
 }

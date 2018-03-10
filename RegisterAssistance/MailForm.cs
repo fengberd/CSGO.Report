@@ -51,6 +51,19 @@ namespace RegisterAssistance
                         match.Groups[1].Value.ToLower(),
                         match.Groups[2].Value
                     }));
+                    if(checkBox_guard_auto.Checked)
+                    {
+
+                        main.browser.MainFrame.ExecuteJavaScriptAsync("if(jQuery('#authcode').length!=0)" +
+                            "{" +
+                                "window.CLoginPromptManager.prototype.OnTransferComplete=function()" +
+                                "{" +
+                                    "this.LoginComplete();" +
+                                "};" +
+                                "jQuery('#authcode').val('"+ match.Groups[2].Value + "');" +
+                                "jQuery('[data-modalstate=\"submit\"]').click();" +
+                            "}");
+                    }
                 }
             }
             else if(data.Contains("Create My Account"))

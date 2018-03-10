@@ -139,17 +139,41 @@ namespace RegisterAssistance
                 browser.MainFrame.ExecuteJavaScriptAsync("if(jQuery('.grouppage_join_area .btn_green_white_innerfade').length==1)" +
                     "{" +
                         "document.forms['join_group_form'].submit();" +
+                    "}" +
+                    "else if(jQuery('.grouppage_join_area .btn_blue_white_innerfade').length==1)" +
+                    "{" +
+                        (checkBox_auto_go_2fa.Checked? "document.location='https://store.steampowered.com/twofactor/manage';" : "") +
                     "}");
-                if(checkBox_auto_go_next_account.Checked && button8.Enabled)
+                break;
+            case "store.steampowered.com/twofactor/manage":
+                if(!checkBox_auto_disable_steam_guard.Checked)
                 {
-                    browser.MainFrame.EvaluateScriptAsync("jQuery('.grouppage_join_area .btn_blue_white_innerfade').length==1?'true':'false'").ContinueWith((r) =>
+                    return;
+                }
+                browser.MainFrame.ExecuteJavaScriptAsync("if(!jQuery('#none_authenticator_check').prop('checked'))" +
+                    "{" +
+                        "document.forms['none_authenticator_form'].submit();" +
+                    "}");
+                break;
+            case "store.steampowered.com/twofactor/manage_action":
+                if(!checkBox_auto_disable_steam_guard.Checked)
+                {
+                    return;
+                }
+                browser.MainFrame.EvaluateScriptAsync("jQuery('.btnv6_green_white_innerfade').length==1?'true':'false'").ContinueWith((r) =>
+                {
+                    if(!r.IsFaulted && r.Result.Success )
                     {
-                        if(!r.IsFaulted && r.Result.Success && r.Result.Result.ToString() == "true")
+                        if(r.Result.Result.ToString() == "true")
+                        {
+                            browser.MainFrame.ExecuteJavaScriptAsync("document.getElementById('none_authenticator_form').submit();");
+                        }
+                        else if(checkBox_auto_go_next_account.Checked && button8.Enabled)
                         {
                             button8.PerformClick();
                         }
-                    });
-                }
+                    }
+                });
                 break;
             case "steamcommunity.com/?go_profile":
             case "store.steampowered.com/?created_account=1":
@@ -189,7 +213,7 @@ namespace RegisterAssistance
                     }
                     browser.MainFrame.ExecuteJavaScriptAsync("if(" + (checkBox_override_profile_check.Checked ? "false)" : "jQuery('#personaName').val()=='CSGO.Report_Bot" + data.Id + "')") +
                         "{" +
-                            (checkBox_auto_go_active.Checked ? "document.location='https://store.steampowered.com/account/registerkey/';" : "") +
+                            (checkBox_auto_go_active.Checked ? (checkBox_direct_go_2fa.Checked? "document.location='https://store.steampowered.com/twofactor/manage';" : "document.location='https://store.steampowered.com/account/registerkey/';") : "") +
                         "}" +
                         "else" +
                         "{" +
@@ -337,9 +361,14 @@ namespace RegisterAssistance
             chromeBrowser_steam.ShowDevTools();
         }
 
+        private void button6_Click(object sender,EventArgs e)
+        {
+            loadUrl("https://store.steampowered.com/twofactor/manage");
+        }
+
         private void button7_Click(object sender,EventArgs e)
         {
-            loadUrl("https://store.steampowered.com/login/");
+            loadUrl("https://steamcommunity.com/login/home/?goto=%3Fgo_profile");
         }
 
         private void button8_Click(object sender,EventArgs e)

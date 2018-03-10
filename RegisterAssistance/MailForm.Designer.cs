@@ -61,7 +61,6 @@
             // checkBox_guard_auto
             // 
             this.checkBox_guard_auto.AutoSize = true;
-            this.checkBox_guard_auto.Enabled = false;
             this.checkBox_guard_auto.Location = new System.Drawing.Point(138, 259);
             this.checkBox_guard_auto.Name = "checkBox_guard_auto";
             this.checkBox_guard_auto.Size = new System.Drawing.Size(48, 16);

@@ -1,10 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 
 using SteamKit2;
 using SteamKit2.GC;
 using SteamKit2.Internal;
 using SteamKit2.GC.CSGO.Internal;
-using System.Collections.Generic;
 
 using BakaServer;
 
@@ -18,6 +18,8 @@ namespace Medusa.utils
         public bool Protected = false, Available = false, Idle = true;
         public string Username, Password, SharedSecret;
 
+        public Queue<ReportInfo> reportQueue = new Queue<ReportInfo>();
+
         private SteamUser steamUser;
         private SteamClient steamClient;
         private SteamFriends steamFriends;
@@ -25,7 +27,6 @@ namespace Medusa.utils
 
         private CallbackManager callbackManager;
 
-        private Queue<ReportInfo> reportQueue = new Queue<ReportInfo>();
         private List<AccountDelayAction> actions = new List<AccountDelayAction>();
 
         public Account(string Username,string Password,bool Protected = false,string SharedSecret = "")
@@ -253,7 +254,7 @@ namespace Medusa.utils
                     {
                         { "username",Username },
                         { "steamid", report.SteamID.ToString() },
-                        { "match", report.MatchID.ToString() },
+                        { "matchid", report.MatchID.ToString() },
                         { "reportid", response.Body.confirmation_id.ToString() },
                         { "time", Utils.Time().ToString() },
                     });
