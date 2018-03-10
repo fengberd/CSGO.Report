@@ -18,11 +18,13 @@ namespace Medusa
 {
     public class Program
     {
-        private static readonly int start_time = Utils.Time();
+        public static readonly int start_time = Utils.Time();
 
+        public static Config config = new Config("config.cfg");
+        
         private static string AccessKey = "";
 
-        private static Config config = new Config("config.cfg");
+        private static MailClient mailClient = null;
         private static AccountManager accountManager = null;
         private static MedusaWebServer web_server = null;
 
@@ -53,6 +55,10 @@ namespace Medusa
                 Logger.Info("Starting Medusa Web Server...");
                 web_server = new MedusaWebServer((short)config.GetInt("ServerPort"),config["ServerAddress","localhost"]);
                 web_server.Start();
+            }
+            if(config.GetBool("MailClientEnabled",false))
+            {
+                mailClient = new MailClient();
             }
             if(!File.Exists(config["AccountsFile","accounts.json"]))
             {
@@ -92,6 +98,21 @@ namespace Medusa
             while(true)
             {
                 Thread.Sleep(50);
+            }
+        }
+
+        public static void MailCodeRecieved(string username,string code)
+        {
+            foreach(var group in accountManager.AccountGroups.Values)
+            {
+                foreach(var account in group)
+                {
+                    if(account.WaitingForCode && account.Username.ToLower()==username)
+                    {
+                        account.AuthCode = code;
+                        account.Connect();
+                    }
+                }
             }
         }
 

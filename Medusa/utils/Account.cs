@@ -17,11 +17,12 @@ namespace Medusa.utils
         public static Config LoginKeys = new Config("loginKeys.ini");
 
         public int FailCounter = -1;
-        public bool Protected = false, Available = false, Idle = true;
-        public string Username, Password, SharedSecret;
+        public bool Protected = false, Available = false, Idle = true,WaitingForCode=false;
+        public string Username, Password, SharedSecret,AuthCode=null,TwoFactorCode=null;
 
         public Queue<ReportInfo> reportQueue = new Queue<ReportInfo>();
 
+        private SentryFile sentry;
         private SteamUser steamUser;
         private SteamClient steamClient;
         private SteamFriends steamFriends;
@@ -38,6 +39,7 @@ namespace Medusa.utils
             this.Protected = Protected;
             this.SharedSecret = SharedSecret;
 
+            sentry = new SentryFile(Username);
             steamClient = new SteamClient(SteamConfiguration.Create(builder =>
             {
                 builder.WithConnectionTimeout(TimeSpan.FromSeconds(30));
@@ -49,23 +51,36 @@ namespace Medusa.utils
             callbackManager = new CallbackManager(steamClient);
             callbackManager.Subscribe<SteamClient.ConnectedCallback>(OnConnected);
             callbackManager.Subscribe<SteamClient.DisconnectedCallback>(OnDisconnected);
-            // callbackManager.Subscribe<SteamUser.UpdateMachineAuthCallback>(OnUpdateMachineAuth);
-            callbackManager.Subscribe<SteamClient.CMListCallback>((ev)=>
-            {
-                Logger.Debug("");
-            });
-            callbackManager.Subscribe<SteamClient.ServerListCallback>((ev) =>
-            {
-                Logger.Debug("");
-            });
+            callbackManager.Subscribe<SteamUser.UpdateMachineAuthCallback>(OnUpdateMachineAuth);
             callbackManager.Subscribe<SteamUser.LoggedOnCallback>(OnLoggedOn);
-            callbackManager.Subscribe<SteamUser.LoginKeyCallback>((callback) => LoginKeys[Username] = callback.LoginKey);
+            callbackManager.Subscribe<SteamUser.LoginKeyCallback>((callback) =>
+            {
+                LoginKeys[Username] = callback.LoginKey;
+                LoginKeys.Save();
+            });
             callbackManager.Subscribe<SteamGameCoordinator.MessageCallback>(OnGCMessage);
         }
 
         public void Tick(long Tick)
         {
             callbackManager.RunCallbacks();
+            if(Tick % 20 == 0)
+            {
+                var to_remove = new List<AccountDelayAction>();
+                foreach(var action in actions)
+                {
+                    if(--action.SecondsRemain <= 0)
+                    {
+                        action.Action.Invoke();
+                        to_remove.Add(action);
+                    }
+                }
+                to_remove.ForEach((a) => actions.Remove(a));
+            }
+            if(!Available)
+            {
+                return;
+            }
             if(Idle)
             {
                 if(reportQueue.Count != 0)
@@ -96,27 +111,15 @@ namespace Medusa.utils
                 Idle = true;
                 reportQueue.Dequeue();
             }
-            if(Tick % 20 == 0)
-            {
-                var to_remove = new List<AccountDelayAction>();
-                foreach(var action in actions)
-                {
-                    if(--action.SecondsRemain <= 0)
-                    {
-                        action.Action.Invoke();
-                        to_remove.Add(action);
-                    }
-                }
-                to_remove.ForEach((a) => actions.Remove(a));
-            }
         }
 
         public bool Connect()
         {
-            if(steamClient.SteamID != null)
+            if(WaitingForCode && AuthCode==null && TwoFactorCode==null)
             {
                 return false;
             }
+            Available = false;
             Logger.Debug("[" + Username + "] Connecting...");
             steamClient.Connect();
             return true;
@@ -130,12 +133,24 @@ namespace Medusa.utils
                 SecondsRemain = delay
             });
         }
-
+        
         #region Steam Callbacks
 
         protected void OnUpdateMachineAuth(SteamUser.UpdateMachineAuthCallback callback)
         {
-
+            sentry.Write(callback.Offset,callback.Data,callback.BytesToWrite);
+            steamUser.SendMachineAuthResponse(new SteamUser.MachineAuthDetails
+            {
+                JobID = callback.JobID,
+                FileName = callback.FileName,
+                BytesWritten = callback.BytesToWrite,
+                FileSize = sentry.Length,
+                Offset = callback.Offset,
+                Result = EResult.OK,
+                LastError = 0,
+                OneTimePassword = callback.OneTimePassword,
+                SentryFileHash = sentry.Hash
+            });
         }
 
         protected void OnConnected(SteamClient.ConnectedCallback callback)
@@ -149,6 +164,9 @@ namespace Medusa.utils
                 LoginID = ((uint)random.Next(1 << 30) << 2) | (uint)random.Next(1 << 2),
                 LoginKey = LoginKeys.ContainsKey(Username) ? LoginKeys[Username] : null,
                 ShouldRememberPassword = true,
+                SentryFileHash = sentry.Exists ? sentry.Hash : null,
+                AuthCode = AuthCode,
+                TwoFactorCode = TwoFactorCode,
                 ClientOSType = EOSType.Windows10,
                 ClientLanguage = "en-US"
             });
@@ -161,6 +179,7 @@ namespace Medusa.utils
                 Logger.Info("[" + Username + "] Disconnected from steam by accident,retrying in 5 seconds.");
                 AddDelayAction(5,() => Connect());
             }
+            Available = false;
         }
 
         protected void OnLoggedOn(SteamUser.LoggedOnCallback callback)
@@ -180,7 +199,17 @@ namespace Medusa.utils
                 break;
             case EResult.AccountLogonDenied:
             case EResult.AccountLoginDeniedNeedTwoFactor:
-                Logger.Error("[" + Username + "] Requires steam token to log in.");
+                if(!Protected)
+                {
+                    Logger.Error("[" + Username + "] Requires steam token to log in.");
+                }
+                else
+                {
+                    // TODO: Auto generate code for EResult.AccountLoginDeniedNeedTwoFactor
+                    Logger.Info("[" + Username + "] Requires steam token to log in,waiting for mail...");
+                    WaitingForCode = true;
+                    TwoFactorCode = AuthCode = null;
+                }
                 break;
             case EResult.InvalidPassword:
                 Logger.Error("[" + Username + "] Password incorrect.");
@@ -189,13 +218,12 @@ namespace Medusa.utils
             case EResult.NoConnection:
             case EResult.TryAnotherCM:
             case EResult.ServiceUnavailable:
-            case EResult.TwoFactorCodeMismatch:
                 Logger.Error("[" + Username + "] Unable to connect to Steam: " + callback.ExtendedResult + ".Retrying...");
-                AddDelayAction(5,() => Connect());
+                AddDelayAction(10,() => Connect());
                 break;
             case EResult.RateLimitExceeded:
-                Logger.Error("[" + Username + "] Steam Rate Limit has been reached.Retrying in 1 minute...");
-                AddDelayAction(60,() => Connect());
+                Logger.Error("[" + Username + "] Steam Rate Limit has been reached.Retrying in 10 minute...");
+                AddDelayAction(600,() => Connect());
                 break;
             case EResult.AccountDisabled:
                 Logger.Error("[" + Username + "] has been permanently disabled by the Steam network.");

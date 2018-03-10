@@ -70,6 +70,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AccountManager.cs" />
+    <Compile Include="MailClient.cs" />
     <Compile Include="MedusaWebServer.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -83,6 +84,7 @@
     <Compile Include="utils\AccountDelayAction.cs" />
     <Compile Include="utils\AccountJson.cs" />
     <Compile Include="utils\ReportInfo.cs" />
+    <Compile Include="utils\SentryFile.cs" />
     <Compile Include="utils\ShareCode.cs" />
     <Compile Include="utils\SteamIdUtil.cs" />
   </ItemGroup>
