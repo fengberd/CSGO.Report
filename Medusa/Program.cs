@@ -21,7 +21,7 @@ namespace Medusa
         public static readonly int start_time = Utils.Time();
 
         public static Config config = new Config("config.cfg");
-        
+
         private static string AccessKey = "";
 
         private static MailClient mailClient = null;
@@ -33,13 +33,10 @@ namespace Medusa
             Logger.Init("medusa");
             Logger.Info("Medusa Report Server " + Assembly.GetExecutingAssembly().GetName().Version + "(" + Server.ServerVersionName + ")");
             Logger.Info("Build date: " + Logger.GetBuildTime());
-#if DEBUG
-            Logger.Warning("Debug version is running...");
-#endif
-            if(!ThreadPool.SetMinThreads(50,50) || !ThreadPool.SetMaxThreads(100,100))
+            if(config.GetBool("SteamKitDebug",false))
             {
-                ThreadPool.GetMaxThreads(out int workerThreads,out int completionPortThreads);
-                Logger.Warning("Can't set ThreadPool settings.Worker:" + workerThreads + ",Port:" + completionPortThreads);
+                DebugLog.Enabled = true;
+                DebugLog.AddListener(new DebugListener());
             }
             if(config["AccessKey",""] == "")
             {
@@ -107,7 +104,7 @@ namespace Medusa
             {
                 foreach(var account in group)
                 {
-                    if(account.WaitingForCode && account.Username.ToLower()==username)
+                    if(account.WaitingForCode && account.Username.ToLower() == username)
                     {
                         account.AuthCode = code;
                         account.Connect();
@@ -188,7 +185,7 @@ namespace Medusa
             }
             Server.SendResult(context,Body: JsonConvert.SerializeObject(result));
         }
-        
+
         public static void ProcessSubmit(HttpListenerContext context,IDictionary<string,string> data)
         {
             IDictionary<string,object> result = new Dictionary<string,object>();

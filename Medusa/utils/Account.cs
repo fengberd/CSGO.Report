@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
+using SteamAuth;
 using SteamKit2;
 using SteamKit2.GC;
 using SteamKit2.Internal;
@@ -42,7 +43,8 @@ namespace Medusa.utils
             sentry = new SentryFile(Username);
             steamClient = new SteamClient(SteamConfiguration.Create(builder =>
             {
-                builder.WithConnectionTimeout(TimeSpan.FromSeconds(30));
+                builder.WithConnectionTimeout(TimeSpan.FromMinutes(1))
+                    .WithDirectoryFetch(true);
             }));
             steamUser = steamClient.GetHandler<SteamUser>();
             steamFriends = steamClient.GetHandler<SteamFriends>();
@@ -51,6 +53,7 @@ namespace Medusa.utils
             callbackManager = new CallbackManager(steamClient);
             callbackManager.Subscribe<SteamClient.ConnectedCallback>(OnConnected);
             callbackManager.Subscribe<SteamClient.DisconnectedCallback>(OnDisconnected);
+
             callbackManager.Subscribe<SteamUser.UpdateMachineAuthCallback>(OnUpdateMachineAuth);
             callbackManager.Subscribe<SteamUser.LoggedOnCallback>(OnLoggedOn);
             callbackManager.Subscribe<SteamUser.LoginKeyCallback>((callback) =>
@@ -58,6 +61,7 @@ namespace Medusa.utils
                 LoginKeys[Username] = callback.LoginKey;
                 LoginKeys.Save();
             });
+
             callbackManager.Subscribe<SteamGameCoordinator.MessageCallback>(OnGCMessage);
         }
 
@@ -174,7 +178,8 @@ namespace Medusa.utils
 
         protected void OnDisconnected(SteamClient.DisconnectedCallback callback)
         {
-            if(!callback.UserInitiated && Available)
+            Logger.Debug("[" + Username + "] Disconnected");
+            if(!callback.UserInitiated && !WaitingForCode)
             {
                 Logger.Info("[" + Username + "] Disconnected from steam by accident,retrying in 5 seconds.");
                 AddDelayAction(5,() => Connect());
@@ -203,9 +208,23 @@ namespace Medusa.utils
                 {
                     Logger.Error("[" + Username + "] Requires steam token to log in.");
                 }
+                else if(callback.Result== EResult.AccountLoginDeniedNeedTwoFactor)
+                {
+                    if(SharedSecret=="")
+                    {
+                        Logger.Error("[" + Username + "] Requires shared secret to log in.");
+                        break;
+                    }
+                    Logger.Info("[" + Username + "] Generating two factor auth code...");
+                    AuthCode = null;
+                    TwoFactorCode = new SteamGuardAccount()
+                    {
+                        SharedSecret = SharedSecret
+                    }.GenerateSteamGuardCode();
+                    Connect();
+                }
                 else
                 {
-                    // TODO: Auto generate code for EResult.AccountLoginDeniedNeedTwoFactor
                     Logger.Info("[" + Username + "] Requires steam token to log in,waiting for mail...");
                     WaitingForCode = true;
                     TwoFactorCode = AuthCode = null;
