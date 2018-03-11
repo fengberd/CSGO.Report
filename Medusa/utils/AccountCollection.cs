@@ -5,7 +5,7 @@ namespace Medusa.utils
 {
     public class AccountCollection : List<Account>
     {
-        public int AvailableCount => this.Where((a) => a.Available).Count();
+        public int AvailableCount => this.Where((a) => a.LoggedIn).Count();
 
         public int DelayedConnectAll(ref int delay)
         {

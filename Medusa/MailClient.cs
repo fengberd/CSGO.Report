@@ -6,7 +6,7 @@ using BakaServer;
 
 namespace Medusa
 {
-    class MailClient
+    public class MailClient
     {
         public ImapClient client = new ImapClient(Program.config["MailServer","outlook.office365.com"],Program.config.GetInt("MailPort",993),Program.config.GetBool("MailTLS",true));
 

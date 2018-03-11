@@ -17,11 +17,13 @@ namespace Medusa.utils
 
         public static Config LoginKeys = new Config("loginKeys.ini");
 
-        public int FailCounter = -1;
-        public bool Protected = false, Available = false, Idle = true,WaitingForCode=false;
-        public string Username, Password, SharedSecret,AuthCode=null,TwoFactorCode=null;
+        public int FailReportCounter = -1;
+        public bool LoggedIn = false, ProcessingReport = false, WaitingForCode = false, GameRunning = false, GameInitalized = false;
+        public string AuthCode = null, TwoFactorCode = null;
 
-        public Queue<ReportInfo> reportQueue = new Queue<ReportInfo>();
+        public bool Protected = false;
+        public string Username, Password, SharedSecret;
+
 
         private SentryFile sentry;
         private SteamUser steamUser;
@@ -31,6 +33,7 @@ namespace Medusa.utils
 
         private CallbackManager callbackManager;
 
+        private Queue<ReportInfo> reportQueue = new Queue<ReportInfo>();
         private List<AccountDelayAction> actions = new List<AccountDelayAction>();
 
         public Account(string Username,string Password,bool Protected = false,string SharedSecret = "")
@@ -81,18 +84,24 @@ namespace Medusa.utils
                 }
                 to_remove.ForEach((a) => actions.Remove(a));
             }
-            if(!Available)
+            if(!LoggedIn)
             {
                 return;
             }
-            if(Idle)
+            if(!ProcessingReport)
             {
                 if(reportQueue.Count != 0)
                 {
-                    var report = reportQueue.Peek();
-                    steamGameCoordinator.Send(new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_ClientReportPlayer>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportPlayer)
+                    if(!GameRunning)
                     {
-                        Body =
+                        StartGame();
+                    }
+                    if(GameInitalized)
+                    {
+                        var report = reportQueue.Peek();
+                        steamGameCoordinator.Send(new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_ClientReportPlayer>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportPlayer)
+                        {
+                            Body =
                         {
                             account_id = report.SteamID.AccountID,
                             match_id = report.MatchID,
@@ -103,30 +112,47 @@ namespace Medusa.utils
                             rpt_textabuse = Convert.ToUInt32(report.AbusiveText),
                             rpt_voiceabuse = Convert.ToUInt32(report.AbusiveVoice)
                         }
-                    },APPID_CSGO);
-                    FailCounter = 30 * 20; // Fail the action if no response in 30s.
-                    Idle = false;
+                        },APPID_CSGO);
+                        FailReportCounter = 30 * 20; // Fail the action if no response in 30s.
+                        ProcessingReport = true;
+                    }
+                }
+                else if(Program.IsOnlineTimeRange())
+                {
+                    if(!GameRunning)
+                    {
+                        StartGame();
+                    }
+                }
+                else if(GameRunning)
+                {
+                    StopGame();
                 }
             }
-            else if(FailCounter > -1 && --FailCounter <= 0)
+            else if(FailReportCounter > -1 && --FailReportCounter <= 0)
             {
                 Logger.Error("[" + Username + "] No report response recieved.Dropping the failed report info.");
-                FailCounter = -1;
-                Idle = true;
+                FailReportCounter = -1;
+                ProcessingReport = false;
                 reportQueue.Dequeue();
             }
         }
 
         public bool Connect()
         {
-            if(WaitingForCode && AuthCode==null && TwoFactorCode==null)
+            if(WaitingForCode && AuthCode == null && TwoFactorCode == null)
             {
                 return false;
             }
-            Available = false;
+            LoggedIn = false;
             Logger.Debug("[" + Username + "] Connecting...");
             steamClient.Connect();
             return true;
+        }
+
+        public void QueueReport(ReportInfo info)
+        {
+            reportQueue.Enqueue(info);
         }
 
         public void AddDelayAction(int delay,Action action)
@@ -137,7 +163,48 @@ namespace Medusa.utils
                 SecondsRemain = delay
             });
         }
-        
+
+        protected void UpdateGameStatus()
+        {
+            var clientGamesPlayed = new ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayed);
+            if(GameRunning)
+            {
+                clientGamesPlayed.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed()
+                {
+                    game_id = APPID_CSGO
+                });
+                AddDelayAction(2,() => steamGameCoordinator.Send(new ClientGCMsgProtobuf<CMsgClientHello>((uint)EGCBaseClientMsg.k_EMsgGCClientHello),APPID_CSGO));
+            }
+            steamClient.Send(clientGamesPlayed);
+        }
+
+        protected void StartGame()
+        {
+            if(GameRunning)
+            {
+                return;
+            }
+            var clientGamesPlayed = new ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayed);
+            clientGamesPlayed.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed()
+            {
+                game_id = APPID_CSGO
+            });
+            GameRunning = true;
+            GameInitalized = false;
+            steamClient.Send(clientGamesPlayed);
+            AddDelayAction(2,() => steamGameCoordinator.Send(new ClientGCMsgProtobuf<CMsgClientHello>((uint)EGCBaseClientMsg.k_EMsgGCClientHello),APPID_CSGO));
+        }
+
+        protected void StopGame()
+        {
+            if(!GameRunning)
+            {
+                return;
+            }
+            GameRunning = GameInitalized = false;
+            steamClient.Send(new ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayed));
+        }
+
         #region Steam Callbacks
 
         protected void OnUpdateMachineAuth(SteamUser.UpdateMachineAuthCallback callback)
@@ -159,7 +226,7 @@ namespace Medusa.utils
 
         protected void OnConnected(SteamClient.ConnectedCallback callback)
         {
-            Logger.Info("[" + Username + "] Connected to steam.");
+            Logger.Debug("[" + Username + "] Connected to steam.");
             var random = new Random();
             steamUser.LogOn(new SteamUser.LogOnDetails()
             {
@@ -179,12 +246,12 @@ namespace Medusa.utils
         protected void OnDisconnected(SteamClient.DisconnectedCallback callback)
         {
             Logger.Debug("[" + Username + "] Disconnected");
-            if(!callback.UserInitiated && !WaitingForCode)
+            if(!callback.UserInitiated && LoggedIn)
             {
                 Logger.Info("[" + Username + "] Disconnected from steam by accident,retrying in 5 seconds.");
                 AddDelayAction(5,() => Connect());
             }
-            Available = false;
+            LoggedIn = false;
         }
 
         protected void OnLoggedOn(SteamUser.LoggedOnCallback callback)
@@ -193,14 +260,9 @@ namespace Medusa.utils
             {
             case EResult.OK:
                 steamFriends.SetPersonaState(EPersonaState.Online);
-                Logger.Info("[" + Username + "] Successfully logged in.");
-                var clientGamesPlayed = new ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayed);
-                clientGamesPlayed.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed()
-                {
-                    game_id = APPID_CSGO
-                });
-                steamClient.Send(clientGamesPlayed);
-                AddDelayAction(2,() => steamGameCoordinator.Send(new ClientGCMsgProtobuf<CMsgClientHello>((uint)EGCBaseClientMsg.k_EMsgGCClientHello),APPID_CSGO));
+                Logger.Info("[" + Username + "] Successfully logged in to steam.");
+                LoggedIn = true;
+                UpdateGameStatus();
                 break;
             case EResult.AccountLogonDenied:
             case EResult.AccountLoginDeniedNeedTwoFactor:
@@ -208,9 +270,9 @@ namespace Medusa.utils
                 {
                     Logger.Error("[" + Username + "] Requires steam token to log in.");
                 }
-                else if(callback.Result== EResult.AccountLoginDeniedNeedTwoFactor)
+                else if(callback.Result == EResult.AccountLoginDeniedNeedTwoFactor)
                 {
-                    if(SharedSecret=="")
+                    if(SharedSecret == "")
                     {
                         Logger.Error("[" + Username + "] Requires shared secret to log in.");
                         break;
@@ -231,13 +293,23 @@ namespace Medusa.utils
                 }
                 break;
             case EResult.InvalidPassword:
-                Logger.Error("[" + Username + "] Password incorrect.");
+                if(LoginKeys.ContainsKey(Username))
+                {
+                    Logger.Error("[" + Username + "] Login Key invalid,retrying...");
+                    LoginKeys.Remove(Username);
+                    LoginKeys.Save();
+                    steamClient.Connect();
+                }
+                else
+                {
+                    Logger.Error("[" + Username + "] Password incorrect.");
+                }
                 break;
             case EResult.Timeout:
             case EResult.NoConnection:
             case EResult.TryAnotherCM:
             case EResult.ServiceUnavailable:
-                Logger.Error("[" + Username + "] Unable to connect to Steam: " + callback.ExtendedResult + ".Retrying...");
+                Logger.Error("[" + Username + "] Unable to connect to Steam: " + callback.ExtendedResult + ".Retrying in 10 seconds...");
                 AddDelayAction(10,() => Connect());
                 break;
             case EResult.RateLimitExceeded:
@@ -312,7 +384,7 @@ namespace Medusa.utils
                         Logger.Error("[" + Username + "] Account has been banned by VAC,VOLVO ARE YOU KIDDING ME????");
                         return;
                     }
-                    Available = true;
+                    GameInitalized = true;
                 }
                 break;
             case (uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportResponse:
@@ -327,8 +399,8 @@ namespace Medusa.utils
                         { "reportid", response.Body.confirmation_id.ToString() },
                         { "time", Utils.Time().ToString() },
                     });
-                    FailCounter = -1;
-                    Idle = true;
+                    FailReportCounter = -1;
+                    ProcessingReport = false;
                     Logger.Info("[" + Username + "] Successfully reported " + report.SteamID + ",Confirmation ID:" + response.Body.confirmation_id);
                 }
                 break;

@@ -47,10 +47,6 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <Target Name="FixMonoTarget" AfterTargets="Build">
-    <Message Importance="High" Text="Deleting System.Net.Http.dll to solve runtime problems with mono" />
-    <Delete Files="bin/$(Configuration)/System.Net.Http.dll" />
-  </Target>
   <ItemGroup>
     <Reference Include="BakaServer, Version=1.0.4.3, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>

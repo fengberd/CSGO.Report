@@ -22,14 +22,19 @@ namespace Medusa
 
         public static Config config = new Config("config.cfg");
 
-        private static string AccessKey = "";
+        public static string AccessKey = "";
 
+        private static TimeSpan OnlineStart, OnlineEnd;
         private static MailClient mailClient = null;
         private static AccountManager accountManager = null;
         private static MedusaWebServer web_server = null;
 
         static void Main(string[] args)
         {
+            if(Environment.OSVersion.Platform == PlatformID.Unix && File.Exists("System.Net.Http.dll"))
+            {
+                File.Delete("System.Net.Http.dll");
+            }
             Logger.Init("medusa");
             Logger.Info("Medusa Report Server " + Assembly.GetExecutingAssembly().GetName().Version + "(" + Server.ServerVersionName + ")");
             Logger.Info("Build date: " + Logger.GetBuildTime());
@@ -61,6 +66,22 @@ namespace Medusa
             {
                 File.WriteAllText(config["AccountsFile"],"[]");
             }
+            if(!config.GetBool("GameAlwaysOnline",false))
+            {
+                try
+                {
+                    var parse = config["GameOnlineStart","9:00:00"].Split(':');
+                    OnlineStart = new TimeSpan(int.Parse(parse[0]),parse.Length >= 2 ? int.Parse(parse[1]) : 0,parse.Length >= 3 ? int.Parse(parse[2]) : 0);
+                    parse = config["GameOnlineEnd","22:00:00"].Split(':');
+                    OnlineEnd = new TimeSpan(int.Parse(parse[0]),parse.Length >= 2 ? int.Parse(parse[1]) : 0,parse.Length >= 3 ? int.Parse(parse[2]) : 0);
+                }
+                catch
+                {
+                    Logger.Error("Can't parse game online time range.");
+                    OnlineStart = new TimeSpan(9,0,0);
+                    OnlineEnd = new TimeSpan(22,0,0);
+                }
+            }
             accountManager = new AccountManager(File.ReadAllText(config["AccountsFile"]));
             Properties.Resources.Whitelist.Split('\n').ToList().ForEach((id) =>
             {
@@ -88,6 +109,16 @@ namespace Medusa
         public static int GetUptime()
         {
             return Utils.Time() - start_time;
+        }
+
+        public static bool IsOnlineTimeRange()
+        {
+            if(config.GetBool("GameAlwaysOnline"))
+            {
+                return true;
+            }
+            var now = DateTime.Now.TimeOfDay;
+            return OnlineStart < now && now < OnlineEnd;
         }
 
         public static void Pause()
@@ -254,7 +285,7 @@ namespace Medusa
                         List<string> accounts_name = new List<string>();
                         foreach(var account in accounts)
                         {
-                            account.reportQueue.Enqueue(info);
+                            account.QueueReport(info);
                             accounts_name.Add(account.Username);
                         }
                         result.Add("success",true);
