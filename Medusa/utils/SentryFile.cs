@@ -4,7 +4,7 @@ using SteamKit2;
 
 namespace Medusa.utils
 {
-    class SentryFile
+    public class SentryFile
     {
         public static string Storage = "sentry";
 

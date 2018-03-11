@@ -13,7 +13,19 @@ namespace Medusa.utils
             foreach(var account in this)
             {
                 account.AddDelayAction(delay,() => account.Connect());
-                delay += 2;
+                delay += 15;
+                if(account.sentry.Exists)
+                {
+                    delay -= 5;
+                }
+                if(Account.LoginKeys.ContainsKey(account.Username))
+                {
+                    delay -= 5;
+                }
+                else if(account.SharedSecret != "")
+                {
+                    delay -= 5;
+                }
             }
             return success;
         }

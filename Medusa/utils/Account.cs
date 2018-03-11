@@ -24,8 +24,10 @@ namespace Medusa.utils
         public bool Protected = false;
         public string Username, Password, SharedSecret;
 
+        public string PREFIX = "";
 
-        private SentryFile sentry;
+        public SentryFile sentry;
+
         private SteamUser steamUser;
         private SteamClient steamClient;
         private SteamFriends steamFriends;
@@ -42,12 +44,12 @@ namespace Medusa.utils
             this.Password = Password;
             this.Protected = Protected;
             this.SharedSecret = SharedSecret;
+            this.PREFIX = "[" + Username + "] ";
 
             sentry = new SentryFile(Username);
             steamClient = new SteamClient(SteamConfiguration.Create(builder =>
             {
-                builder.WithConnectionTimeout(TimeSpan.FromMinutes(1))
-                    .WithDirectoryFetch(true);
+                builder.WithConnectionTimeout(TimeSpan.FromMinutes(1));
             }));
             steamUser = steamClient.GetHandler<SteamUser>();
             steamFriends = steamClient.GetHandler<SteamFriends>();
@@ -131,7 +133,7 @@ namespace Medusa.utils
             }
             else if(FailReportCounter > -1 && --FailReportCounter <= 0)
             {
-                Logger.Error("[" + Username + "] No report response recieved.Dropping the failed report info.");
+                Logger.Error(PREFIX + "No report response recieved.Dropping the failed report info.");
                 FailReportCounter = -1;
                 ProcessingReport = false;
                 reportQueue.Dequeue();
@@ -145,7 +147,7 @@ namespace Medusa.utils
                 return false;
             }
             LoggedIn = false;
-            Logger.Debug("[" + Username + "] Connecting...");
+            Logger.Debug(PREFIX + "Connecting...");
             steamClient.Connect();
             return true;
         }
@@ -226,7 +228,7 @@ namespace Medusa.utils
 
         protected void OnConnected(SteamClient.ConnectedCallback callback)
         {
-            Logger.Debug("[" + Username + "] Connected to steam.");
+            Logger.Debug(PREFIX + "Connected to steam.");
             var random = new Random();
             steamUser.LogOn(new SteamUser.LogOnDetails()
             {
@@ -245,13 +247,14 @@ namespace Medusa.utils
 
         protected void OnDisconnected(SteamClient.DisconnectedCallback callback)
         {
-            Logger.Debug("[" + Username + "] Disconnected");
+            Logger.Debug(PREFIX + "Disconnected");
             if(!callback.UserInitiated && LoggedIn)
             {
-                Logger.Info("[" + Username + "] Disconnected from steam by accident,retrying in 5 seconds.");
+                Logger.Info(PREFIX + "Disconnected from steam by accident,retrying in 5 seconds.");
                 AddDelayAction(5,() => Connect());
             }
             LoggedIn = false;
+            ProcessingReport = WaitingForCode = GameRunning = GameInitalized = false;
         }
 
         protected void OnLoggedOn(SteamUser.LoggedOnCallback callback)
@@ -260,7 +263,7 @@ namespace Medusa.utils
             {
             case EResult.OK:
                 steamFriends.SetPersonaState(EPersonaState.Online);
-                Logger.Info("[" + Username + "] Successfully logged in to steam.");
+                Logger.Info(PREFIX + "Successfully logged in to steam.");
                 LoggedIn = true;
                 UpdateGameStatus();
                 break;
@@ -268,16 +271,16 @@ namespace Medusa.utils
             case EResult.AccountLoginDeniedNeedTwoFactor:
                 if(!Protected)
                 {
-                    Logger.Error("[" + Username + "] Requires steam token to log in.");
+                    Logger.Error(PREFIX + "Requires steam token to log in.");
                 }
                 else if(callback.Result == EResult.AccountLoginDeniedNeedTwoFactor)
                 {
                     if(SharedSecret == "")
                     {
-                        Logger.Error("[" + Username + "] Requires shared secret to log in.");
+                        Logger.Error(PREFIX + "Requires shared secret to log in.");
                         break;
                     }
-                    Logger.Info("[" + Username + "] Generating two factor auth code...");
+                    Logger.Info(PREFIX + "Generating two factor auth code...");
                     AuthCode = null;
                     TwoFactorCode = new SteamGuardAccount()
                     {
@@ -285,9 +288,13 @@ namespace Medusa.utils
                     }.GenerateSteamGuardCode();
                     Connect();
                 }
+                else if(!Program.config.GetBool("MailClientEnabled"))
+                {
+                    Logger.Error(PREFIX + "Requires steam token to log in,please configure mail client.");
+                }
                 else
                 {
-                    Logger.Info("[" + Username + "] Requires steam token to log in,waiting for mail...");
+                    Logger.Info(PREFIX + "Requires steam token to log in,waiting for mail...");
                     WaitingForCode = true;
                     TwoFactorCode = AuthCode = null;
                 }
@@ -295,32 +302,26 @@ namespace Medusa.utils
             case EResult.InvalidPassword:
                 if(LoginKeys.ContainsKey(Username))
                 {
-                    Logger.Error("[" + Username + "] Login Key invalid,retrying...");
+                    Logger.Error(PREFIX + "Login Key invalid,retrying...");
                     LoginKeys.Remove(Username);
                     LoginKeys.Save();
                     steamClient.Connect();
                 }
                 else
                 {
-                    Logger.Error("[" + Username + "] Password incorrect.");
+                    Logger.Error(PREFIX + "Password incorrect.");
                 }
                 break;
-            case EResult.Timeout:
-            case EResult.NoConnection:
-            case EResult.TryAnotherCM:
-            case EResult.ServiceUnavailable:
-                Logger.Error("[" + Username + "] Unable to connect to Steam: " + callback.ExtendedResult + ".Retrying in 10 seconds...");
-                AddDelayAction(10,() => Connect());
-                break;
             case EResult.RateLimitExceeded:
-                Logger.Error("[" + Username + "] Steam Rate Limit has been reached.Retrying in 10 minute...");
-                AddDelayAction(600,() => Connect());
+                Logger.Error(PREFIX + "Steam Rate Limit has been reached.Retrying in 30 minutes...");
+                AddDelayAction(1200,() => Connect());
                 break;
             case EResult.AccountDisabled:
-                Logger.Error("[" + Username + "] has been permanently disabled by the Steam network.");
+                Logger.Error(PREFIX + "has been permanently disabled by the Steam network.");
                 break;
             default:
-                Logger.Error("[" + Username + "] Unable to login: " + callback.Result + "(" + callback.ExtendedResult + ").");
+                Logger.Error(PREFIX + "Unable to login: " + callback.Result + "(" + callback.ExtendedResult + ").Retrying in 10 seconds...");
+                AddDelayAction(10,() => Connect());
                 break;
             }
         }
@@ -333,7 +334,7 @@ namespace Medusa.utils
             case (uint)EGCBaseClientMsg.k_EMsgGCClientWelcome:
                 {
                     var response = new ClientGCMsgProtobuf<CMsgClientWelcome>(msg);
-                    Logger.Debug("[" + Username + "] Connected to " + response.Body.location.country + " server.");
+                    Logger.Info(PREFIX + "Connected to CSGO " + response.Body.location.country + " server.");
                     steamGameCoordinator.Send(new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_MatchmakingClient2GCHello>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchmakingClient2GCHello),APPID_CSGO);
                 }
                 break;
@@ -345,13 +346,13 @@ namespace Medusa.utils
                         switch(response.Body.penalty_reason)
                         {
                         case 10:
-                            Logger.Error("[" + Username + "] Account has been convicted by Overwatch as majorly disruptive.");
+                            Logger.Error(PREFIX + "Account has been convicted by Overwatch as majorly disruptive.");
                             return;
                         case 11:
-                            Logger.Error("[" + Username + "] Account has been convicted by Overwatch as minorly disruptive.");
+                            Logger.Error(PREFIX + "Account has been convicted by Overwatch as minorly disruptive.");
                             return;
                         case 14:
-                            Logger.Error("[" + Username + "] Account is permanently untrusted.");
+                            Logger.Error(PREFIX + "Account is permanently untrusted.");
                             return;
                         default:
                             if(response.Body.penalty_secondsSpecified)
@@ -369,19 +370,19 @@ namespace Medusa.utils
                                         timeString = penalty.Minutes + " Minutes";
                                     }
 
-                                    Logger.Warning("[" + Username + "] Account has received a Matchmaking cooldown.Retrying in " + penalty.Seconds + " seconds.");
+                                    Logger.Warning(PREFIX + "Account has received a Matchmaking cooldown.Retrying in " + penalty.Seconds + " seconds.");
                                     steamClient.Disconnect();
                                     AddDelayAction(penalty.Seconds,() => Connect());
                                     return;
                                 }
                             }
-                            Logger.Error("[" + Username + "] Account has been permanently banned from CS:GO.");
+                            Logger.Error(PREFIX + "Account has been permanently banned from CS:GO.");
                             return;
                         }
                     }
                     else if(response.Body.vac_bannedSpecified && response.Body.vac_banned == 2 && !response.Body.penalty_secondsSpecified)
                     {
-                        Logger.Error("[" + Username + "] Account has been banned by VAC,VOLVO ARE YOU KIDDING ME????");
+                        Logger.Error(PREFIX + "Account has been banned by VAC,VOLVO ARE YOU KIDDING ME????");
                         return;
                     }
                     GameInitalized = true;
@@ -401,7 +402,7 @@ namespace Medusa.utils
                     });
                     FailReportCounter = -1;
                     ProcessingReport = false;
-                    Logger.Info("[" + Username + "] Successfully reported " + report.SteamID + ",Confirmation ID:" + response.Body.confirmation_id);
+                    Logger.Info(PREFIX + "Successfully reported " + report.SteamID + ",Confirmation ID:" + response.Body.confirmation_id);
                 }
                 break;
             }

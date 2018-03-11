@@ -38,10 +38,16 @@ namespace Medusa
             Logger.Init("medusa");
             Logger.Info("Medusa Report Server " + Assembly.GetExecutingAssembly().GetName().Version + "(" + Server.ServerVersionName + ")");
             Logger.Info("Build date: " + Logger.GetBuildTime());
+            Logger.EnableDebug = config.GetBool("LogDebug",false);
+            Logger.EnableColor = config.GetBool("LogColor",true);
             if(config.GetBool("SteamKitDebug",false))
             {
                 DebugLog.Enabled = true;
                 DebugLog.AddListener(new DebugListener());
+            }
+            if(config.GetBool("MailClientEnabled",false))
+            {
+                mailClient = new MailClient();
             }
             if(config["AccessKey",""] == "")
             {
@@ -57,10 +63,6 @@ namespace Medusa
                 Logger.Info("Starting Medusa Web Server...");
                 web_server = new MedusaWebServer((short)config.GetInt("ServerPort"),config["ServerAddress","localhost"]);
                 web_server.Start();
-            }
-            if(config.GetBool("MailClientEnabled",false))
-            {
-                mailClient = new MailClient();
             }
             if(!File.Exists(config["AccountsFile","accounts.json"]))
             {
@@ -137,6 +139,7 @@ namespace Medusa
                 {
                     if(account.WaitingForCode && account.Username.ToLower() == username)
                     {
+                        Logger.Info("[Mail] Recieved code for account " + account.Username);
                         account.AuthCode = code;
                         account.Connect();
                     }
