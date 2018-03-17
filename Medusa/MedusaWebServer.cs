@@ -3,7 +3,6 @@ using System.Net;
 using System.Collections.Generic;
 
 using BakaServer;
-using Newtonsoft.Json;
 
 namespace Medusa
 {
@@ -23,7 +22,7 @@ namespace Medusa
         {
 
         }
-        
+
         public override void Start()
         {
             base.Start();

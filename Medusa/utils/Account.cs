@@ -152,6 +152,16 @@ namespace Medusa.utils
             return true;
         }
 
+        public bool Disconnect()
+        {
+            if(!LoggedIn)
+            {
+                return false;
+            }
+            steamClient.Disconnect();
+            return true;
+        }
+
         public void QueueReport(ReportInfo info)
         {
             reportQueue.Enqueue(info);
@@ -251,7 +261,7 @@ namespace Medusa.utils
             if(!callback.UserInitiated && LoggedIn)
             {
                 Logger.Info(PREFIX + "Disconnected from steam by accident,retrying in 5 seconds.");
-                AddDelayAction(5,() => Connect());
+                AccountManager.DelayedLoginQueue.Enqueue(this);
             }
             LoggedIn = false;
             ProcessingReport = WaitingForCode = GameRunning = GameInitalized = false;
@@ -328,13 +338,17 @@ namespace Medusa.utils
 
         protected void OnGCMessage(SteamGameCoordinator.MessageCallback callback)
         {
+            if(!LoggedIn)
+            {
+                return;
+            }
             var msg = callback.Message;
             switch(callback.EMsg)
             {
             case (uint)EGCBaseClientMsg.k_EMsgGCClientWelcome:
                 {
                     var response = new ClientGCMsgProtobuf<CMsgClientWelcome>(msg);
-                    Logger.Info(PREFIX + "Connected to CSGO " + response.Body.location.country + " server.");
+                    Logger.Info(PREFIX + "Connected to CS:GO " + response.Body.location.country + " server.");
                     steamGameCoordinator.Send(new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_MatchmakingClient2GCHello>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchmakingClient2GCHello),APPID_CSGO);
                 }
                 break;
@@ -343,6 +357,7 @@ namespace Medusa.utils
                     var response = new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_MatchmakingGC2ClientHello>(msg);
                     if(response.Body.penalty_reasonSpecified)
                     {
+                        LoggedIn = false;
                         switch(response.Body.penalty_reason)
                         {
                         case 10:
@@ -382,6 +397,7 @@ namespace Medusa.utils
                     }
                     else if(response.Body.vac_bannedSpecified && response.Body.vac_banned == 2 && !response.Body.penalty_secondsSpecified)
                     {
+                        LoggedIn = false;
                         Logger.Error(PREFIX + "Account has been banned by VAC,VOLVO ARE YOU KIDDING ME????");
                         return;
                     }

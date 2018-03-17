@@ -1,16 +1,20 @@
-﻿using System.Collections.Generic;
+﻿using System.Linq;
+using System.Collections.Generic;
 
 using SteamKit2;
 using BakaServer;
 using Newtonsoft.Json;
 
 using Medusa.utils;
+using System;
 
 namespace Medusa
 {
     public class AccountManager
     {
+        public static long DelayTo = 0;
         public static List<ulong> Whitelist = new List<ulong>();
+        public static Queue<Account> DelayedLoginQueue = new Queue<Account>();
 
         public static bool IsWhitelisted(SteamID steamID)
         {
@@ -36,19 +40,37 @@ namespace Medusa
             Logger.Info("Successfully initialized " + count + " accounts.");
         }
 
-        public int DelayedConnectAll()
+        public void DelayedConnectAll()
         {
-            int delay = 0;
-            int success = 0;
-            foreach(var group in AccountGroups.Values)
-            {
-                success += group.DelayedConnectAll(ref delay);
-            }
-            return success;
+            AccountGroups.Values.ToList().ForEach((group) => group.ForEach(DelayedLoginQueue.Enqueue));
         }
 
         public void Tick(long Tick)
         {
+            int delay = Math.Max(0,(int)(DelayTo - Utils.Time()));
+            while(DelayedLoginQueue.Count != 0)
+            {
+                var account = DelayedLoginQueue.Dequeue();
+                if(account.LoggedIn)
+                {
+                    continue;
+                }
+                delay += 15;
+                if(account.sentry.Exists)
+                {
+                    delay -= 5;
+                }
+                if(Account.LoginKeys.ContainsKey(account.Username))
+                {
+                    delay -= 5;
+                }
+                else if(account.SharedSecret != "")
+                {
+                    delay -= 5;
+                }
+                account.AddDelayAction(delay,() => account.Connect());
+            }
+            DelayTo = Math.Max(DelayTo,Utils.Time()) + delay;
             foreach(var group in AccountGroups.Values)
             {
                 group.TickAll(Tick);
