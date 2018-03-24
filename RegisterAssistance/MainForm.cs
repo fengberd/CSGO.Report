@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using CefSharp;
 using CefSharp.WinForms;
 
+using RegisterAssistance.captcha;
+
 namespace RegisterAssistance
 {
     public partial class MainForm : Form
@@ -57,6 +59,12 @@ namespace RegisterAssistance
             {
                 chromeBrowser_mail.ExecuteScriptAsync("document.write('');");
             };
+            switch(Program.config["CaptchaProcessor",""])
+            {
+            case "Yundama":
+                CodeInputDialog.captchaProcessor = new Yundama();
+                break;
+            }
         }
 
         private string getAvatar(int id)
@@ -106,7 +114,7 @@ namespace RegisterAssistance
                     "jQuery('#password,#reenter_password').val('" + data.Password + "');" +
                     "CheckPasswordStrength();" +
                     "ReenterPasswordChange();" +
-                    "jQuery('#email,#reenter_email').val('report_bot@berd.moe');" +
+                    "jQuery('#email,#reenter_email').val('report_bot_"+data.Id+"@csgo.report');" +
                     "jQuery('#i_agree_check').click();" +
                     "jQuery('.ssa_box').height(10);" +
                     "jQuery('#captcha_text').focus();" +

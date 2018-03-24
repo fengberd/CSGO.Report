@@ -37,7 +37,7 @@ namespace Medusa
             }
             Logger.Init("medusa");
             Logger.Info("Medusa Report Server " + Assembly.GetExecutingAssembly().GetName().Version + "(" + Server.ServerVersionName + ")");
-            Logger.Info("Build date: " + Logger.GetBuildTime());
+            // Logger.Info("Build date: " + Logger.GetBuildTime());
             Logger.EnableDebug = config.GetBool("LogDebug",false);
             Logger.EnableColor = config.GetBool("LogColor",true);
             if(config.GetBool("SteamKitDebug",false))
@@ -156,65 +156,48 @@ namespace Medusa
 
         public static void ProcessStatus(HttpListenerContext context,IDictionary<string,string> data)
         {
-            IDictionary<string,object> result = new Dictionary<string,object>();
-            if(!data.ContainsKey("key"))
+            int online = 0, total = 0;
+            var groups = new Dictionary<int,int>();
+            foreach(var kv in accountManager.AccountGroups)
             {
-                result.Add("success",false);
-                result.Add("message","参数错误");
+                total += kv.Value.Count;
+                online += kv.Value.AvailableCount;
+                groups.Add(kv.Key,kv.Value.AvailableCount);
             }
-            else if(!CheckAccessKey(data["key"]))
+            Server.SendResult(context,Body: JsonConvert.SerializeObject(new Dictionary<string,object>()
             {
-                result.Add("success",false);
-                result.Add("message","Access Denied.");
-            }
-            else
-            {
-                result.Add("success",true);
-                int online = 0;
-                var groups = new Dictionary<int,int>();
-                foreach(var kv in accountManager.AccountGroups)
-                {
-                    online += kv.Value.AvailableCount;
-                    groups.Add(kv.Key,kv.Value.AvailableCount);
-                }
-                result.Add("groups",groups);
-                result.Add("online",online);
-                result.Add("uptime",GetUptime());
-            }
-            Server.SendResult(context,Body: JsonConvert.SerializeObject(result));
+                { "success",true },
+                { "groups",groups },
+                { "accounts",new Dictionary<string,int>()
+                    {
+                        { "online",online },
+                        { "total",total }
+                    }
+               },
+                { "uptime",GetUptime() }
+            }));
         }
 
         public static void ProcessLogs(HttpListenerContext context,IDictionary<string,string> data)
         {
-            IDictionary<string,object> result = new Dictionary<string,object>();
-            if(!data.ContainsKey("key"))
+            IDictionary<string,object> result = new Dictionary<string,object>()
             {
-                result.Add("success",false);
-                result.Add("message","参数错误");
-            }
-            else if(!CheckAccessKey(data["key"]))
+                { "success",true }
+            };
+            if(data.ContainsKey("remove") && int.TryParse(data["remove"],out int remove))
             {
-                result.Add("success",false);
-                result.Add("message","Access Denied.");
+                lock(MedusaWebServer.report_log)
+                {
+                    MedusaWebServer.report_log.RemoveRange(0,remove);
+                    result["message"] = "Removed " + remove + " logs.";
+                }
             }
             else
             {
-                result.Add("success",true);
-                if(data.ContainsKey("remove") && int.TryParse(data["remove"],out int remove))
+                lock(MedusaWebServer.report_log)
                 {
-                    lock(MedusaWebServer.report_log)
-                    {
-                        MedusaWebServer.report_log.RemoveRange(0,remove);
-                        result.Add("message","Removed " + remove + " logs.");
-                    }
-                }
-                else
-                {
-                    lock(MedusaWebServer.report_log)
-                    {
-                        result.Add("log",MedusaWebServer.report_log);
-                        result.Add("message","");
-                    }
+                    result["log"] = MedusaWebServer.report_log;
+                    result["message"] = "";
                 }
             }
             Server.SendResult(context,Body: JsonConvert.SerializeObject(result));
@@ -222,26 +205,17 @@ namespace Medusa
 
         public static void ProcessSubmit(HttpListenerContext context,IDictionary<string,string> data)
         {
-            IDictionary<string,object> result = new Dictionary<string,object>();
-            if(!data.ContainsKey("key") || !data.ContainsKey("id") || !data.ContainsKey("match") || !data.ContainsKey("group") || !data.ContainsKey("flags"))
+            IDictionary<string,object> result = new Dictionary<string,object>()
             {
-                result.Add("success",false);
-                result.Add("message","参数错误");
-            }
-            else if(!CheckAccessKey(data["key"]))
+                { "success",false }
+            };
+            if(!data.ContainsKey("id") || !data.ContainsKey("match") || !data.ContainsKey("group") || !data.ContainsKey("flags") || !int.TryParse(data["group"],out int group) || !int.TryParse(data["flags"],out int flags))
             {
-                result.Add("success",false);
-                result.Add("message","Access Denied.");
-            }
-            else if(!int.TryParse(data["group"],out int group) || !int.TryParse(data["flags"],out int flags))
-            {
-                result.Add("success",false);
-                result.Add("message","参数错误");
+                result["message"] = "参数错误";
             }
             else if(group == -1 || !accountManager.AccountGroups.ContainsKey(group))
             {
-                result.Add("success",false);
-                result.Add("message","账户组不存在");
+                result["message"] = "账户组不存在";
             }
             else
             {
@@ -263,13 +237,11 @@ namespace Medusa
                 {
                     if(matchID == 0)
                     {
-                        result.Add("success",false);
-                        result.Add("message","请提供有效的Match ID.");
+                        result["message"] = "请提供有效的Match ID.";
                     }
                     else if(AccountManager.IsWhitelisted(steamID))
                     {
-                        result.Add("success",false);
-                        result.Add("message","举报目标在我们的白名单中,这通常说明举报目标不会作弊或是我们的机器人账号之一.");
+                        result["message"] = "举报目标在我们的白名单中,这通常说明举报目标不会作弊或是我们的机器人账号之一.";
                     }
                     else
                     {
@@ -291,23 +263,40 @@ namespace Medusa
                             account.QueueReport(info);
                             accounts_name.Add(account.Username);
                         }
-                        result.Add("success",true);
-                        result.Add("accounts",accounts_name);
-                        result.Add("message","Abusive Text:" + info.AbusiveText + "<br />" +
+                        result["success"] = true;
+                        result["accounts"] = accounts_name;
+                        result["message"] = "Abusive Text:" + info.AbusiveText + "<br />" +
                             "Abusive Voice:" + info.AbusiveVoice + "<br />" +
                             "Griefing:" + info.Griefing + "<br />" +
                             "Aim Hacking:" + info.AimHacking + "<br />" +
                             "Wall Hacking:" + info.WallHacking + "<br />" +
-                            "Other Hacking:" + info.OtherHacking);
+                            "Other Hacking:" + info.OtherHacking;
                     }
                 }
                 else
                 {
-                    result.Add("success",false);
-                    result.Add("message","无法解析Steam ID,请提供有效的SteamID,SteamID3或SteamID64.");
+                    result["message"] = "无法解析Steam ID,请提供有效的SteamID,SteamID3或SteamID64.";
                 }
             }
             Server.SendResult(context,Body: JsonConvert.SerializeObject(result));
+        }
+
+        public static void ProcessLoginFailed(HttpListenerContext context,IDictionary<string,string> data)
+        {
+            int counter = 0;
+            accountManager.AccountGroups.Values.ToList().ForEach((group) => group.ForEach((account) =>
+            {
+                if(account.LoggedIn == false && !account.Connected && !AccountManager.DelayedLoginQueue.Contains(account) && account.DelayedActionsEmpty)
+                {
+                    counter++;
+                    AccountManager.DelayedLoginQueue.Enqueue(account);
+                }
+            }));
+            Server.SendResult(context,Body: JsonConvert.SerializeObject(new Dictionary<string,object>()
+            {
+                { "success",true },
+                { "message","Added "+counter+" accounts into login queue." }
+            }));
         }
 
         #endregion

@@ -18,8 +18,11 @@ namespace Medusa.utils
         public static Config LoginKeys = new Config("loginKeys.ini");
 
         public int FailReportCounter = -1;
+        public bool Connected => steamClient.IsConnected;
+        public bool DelayedActionsEmpty => actions.Count == 0;
         public bool LoggedIn = false, ProcessingReport = false, WaitingForCode = false, GameRunning = false, GameInitalized = false;
         public string AuthCode = null, TwoFactorCode = null;
+
 
         public bool Protected = false;
         public string Username, Password, SharedSecret;
@@ -47,10 +50,7 @@ namespace Medusa.utils
             this.PREFIX = "[" + Username + "] ";
 
             sentry = new SentryFile(Username);
-            steamClient = new SteamClient(SteamConfiguration.Create(builder =>
-            {
-                builder.WithConnectionTimeout(TimeSpan.FromMinutes(1));
-            }));
+            steamClient = new SteamClient(SteamConfiguration.Create((builder) => builder.WithConnectionTimeout(TimeSpan.FromSeconds(20))));
             steamUser = steamClient.GetHandler<SteamUser>();
             steamFriends = steamClient.GetHandler<SteamFriends>();
             steamGameCoordinator = steamClient.GetHandler<SteamGameCoordinator>();
@@ -411,7 +411,7 @@ namespace Medusa.utils
                     MedusaWebServer.addReportLog(new Dictionary<string,string>()
                     {
                         { "username",Username },
-                        { "steamid", report.SteamID.ToString() },
+                        { "steamid", report.SteamID.ConvertToUInt64().ToString() },
                         { "matchid", report.MatchID.ToString() },
                         { "reportid", response.Body.confirmation_id.ToString() },
                         { "time", Utils.Time().ToString() },
