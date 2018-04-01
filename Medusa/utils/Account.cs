@@ -23,7 +23,6 @@ namespace Medusa.utils
         public bool LoggedIn = false, ProcessingReport = false, WaitingForCode = false, GameRunning = false, GameInitalized = false;
         public string AuthCode = null, TwoFactorCode = null;
 
-
         public bool Protected = false;
         public string Username, Password, SharedSecret;
 
@@ -75,16 +74,19 @@ namespace Medusa.utils
             callbackManager.RunCallbacks();
             if(Tick % 20 == 0)
             {
-                var to_remove = new List<AccountDelayAction>();
-                foreach(var action in actions)
+                lock(actions)
                 {
-                    if(--action.SecondsRemain <= 0)
+                    var to_remove = new List<AccountDelayAction>();
+                    foreach(var action in actions)
                     {
-                        action.Action.Invoke();
-                        to_remove.Add(action);
+                        if(--action.SecondsRemain <= 0)
+                        {
+                            action.Action.Invoke();
+                            to_remove.Add(action);
+                        }
                     }
+                    to_remove.ForEach((a) => actions.Remove(a));
                 }
-                to_remove.ForEach((a) => actions.Remove(a));
             }
             if(!LoggedIn)
             {
@@ -104,16 +106,16 @@ namespace Medusa.utils
                         steamGameCoordinator.Send(new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_ClientReportPlayer>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportPlayer)
                         {
                             Body =
-                        {
-                            account_id = report.SteamID.AccountID,
-                            match_id = report.MatchID,
-                            rpt_aimbot = Convert.ToUInt32(report.AimHacking),
-                            rpt_wallhack = Convert.ToUInt32(report.WallHacking),
-                            rpt_speedhack = Convert.ToUInt32(report.OtherHacking),
-                            rpt_teamharm = Convert.ToUInt32(report.Griefing),
-                            rpt_textabuse = Convert.ToUInt32(report.AbusiveText),
-                            rpt_voiceabuse = Convert.ToUInt32(report.AbusiveVoice)
-                        }
+                            {
+                                account_id = report.SteamID.AccountID,
+                                match_id = report.MatchID,
+                                rpt_aimbot = Convert.ToUInt32(report.AimHacking),
+                                rpt_wallhack = Convert.ToUInt32(report.WallHacking),
+                                rpt_speedhack = Convert.ToUInt32(report.OtherHacking),
+                                rpt_teamharm = Convert.ToUInt32(report.Griefing),
+                                rpt_textabuse = Convert.ToUInt32(report.AbusiveText),
+                                rpt_voiceabuse = Convert.ToUInt32(report.AbusiveVoice)
+                            }
                         },APPID_CSGO);
                         FailReportCounter = 30 * 20; // Fail the action if no response in 30s.
                         ProcessingReport = true;
@@ -169,11 +171,14 @@ namespace Medusa.utils
 
         public void AddDelayAction(int delay,Action action)
         {
-            actions.Add(new AccountDelayAction()
+            lock(actions)
             {
-                Action = action,
-                SecondsRemain = delay
-            });
+                actions.Add(new AccountDelayAction()
+                {
+                    Action = action,
+                    SecondsRemain = delay
+                });
+            }
         }
 
         protected void UpdateGameStatus()

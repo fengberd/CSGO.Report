@@ -5,6 +5,8 @@ using System.Drawing.Imaging;
 using System.Collections.Generic;
 
 using RestSharp;
+using RestSharp.Deserializers;
+
 using BakaServer;
 
 namespace RegisterAssistance.captcha
@@ -16,6 +18,11 @@ namespace RegisterAssistance.captcha
         public Config config = new Config("config_yundama.ini");
         public RestClient CLIENT = new RestClient(API_BASE);
 
+        public Yundama()
+        {
+            CLIENT.AddHandler("text/html",new JsonDeserializer());
+        }
+
         public IDictionary<string,object> request(string method,Action<IRestRequest> paramProcessor)
         {
             var request = new RestRequest(Method.POST);
@@ -23,7 +30,8 @@ namespace RegisterAssistance.captcha
             paramProcessor.Invoke(request);
             try
             {
-                return CLIENT.Post<Dictionary<string,object>>(request).Data;
+                var result = CLIENT.Post<Dictionary<string,object>>(request);
+                return result.Data;
             }
             catch
             {
@@ -35,13 +43,13 @@ namespace RegisterAssistance.captcha
         {
             using(var ms = new MemoryStream())
             {
-                data.Save(ms,ImageFormat.Jpeg);
+                data.Save(ms,ImageFormat.Png);
                 var result = request("upload",(request) =>
                 {
                     addBasicParams(request);
                     request.AddParameter("timeout",config["Timeout","20"]);
                     request.AddParameter("codetype",config["CodeType","5006"]);
-                    request.AddFileBytes("file",ms.ToArray(),"upload.jpg","image/jpeg");
+                    request.AddFileBytes("file",ms.ToArray(),"upload.png","image/png");
                 });
                 if(result == null || !result.ContainsKey("ret") || !result.ContainsKey("cid") || result["ret"].ToString() != "0")
                 {

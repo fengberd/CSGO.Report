@@ -54,7 +54,7 @@ namespace Medusa
                 case "/log":
                 case "/status":
                 case "/submit":
-                case "/login/failed":
+                case "/login_failed":
                     SendError(context,StatusCode.E_405);
                     break;
                 default:

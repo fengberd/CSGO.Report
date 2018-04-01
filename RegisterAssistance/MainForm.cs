@@ -8,6 +8,8 @@ using CefSharp;
 using CefSharp.WinForms;
 
 using RegisterAssistance.captcha;
+using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 
 namespace RegisterAssistance
 {
@@ -22,6 +24,8 @@ namespace RegisterAssistance
 
         public List<Account> data = new List<Account>();
         public List<string> avatars = new List<string>();
+
+        private CodeInputDialog currentCaptchaDialog = null;
 
         public MainForm()
         {
@@ -48,7 +52,6 @@ namespace RegisterAssistance
                 if(e.IsBrowserInitialized)
                 {
                     browser = chromeBrowser_steam.GetBrowser();
-                    timer_get_vcode.Enabled = true;
                 }
             };
             panel_mail.Controls.Add(chromeBrowser_mail = new ChromiumWebBrowser("")
@@ -66,7 +69,7 @@ namespace RegisterAssistance
                 break;
             }
         }
-
+        
         private string getAvatar(int id)
         {
             return avatars[id % avatars.Count];
@@ -317,11 +320,15 @@ namespace RegisterAssistance
 
         private void timer_get_vcode_Tick(object sender,EventArgs e)
         {
-            if(!vcode_shown && !browser.IsLoading && browser.MainFrame.Url.ToLower().Replace("http://","").Replace("https://","").Replace("//","/") == "store.steampowered.com/join/")
+            if(browser.IsLoading || browser.MainFrame.Url.ToLower().Replace("http://","").Replace("https://","").Replace("//","/") != "store.steampowered.com/join/")
+            {
+                return;
+            }
+            if(!vcode_shown)
             {
                 browser.MainFrame.EvaluateScriptAsync("if(jQuery('#lmao_canvas').length==0)" +
                     "{" +
-                        "jQuery('body').append('<canvas id=lmao_canvas />');" +
+                        "jQuery('body').append('<canvas id=lmao_canvas width='+jQuery('#captchaImg').width()+' height='+jQuery('#captchaImg').height()+' />');" +
                     "}" +
                     "var c=jQuery('#lmao_canvas')[0];" +
                     "c.getContext('2d').drawImage(jQuery('#captchaImg')[0],0,0);" +
@@ -337,15 +344,31 @@ namespace RegisterAssistance
                             {
                                 var image = Image.FromStream(new MemoryStream(Convert.FromBase64String(r.Result.Result.ToString().Split(',')[1])));
                                 vcode_shown = true;
-                                var dialog = new CodeInputDialog(this,image);
-                                if(dialog.ShowDialog() == DialogResult.OK)
+                                currentCaptchaDialog = new CodeInputDialog(this,image);
+                                if(currentCaptchaDialog.ShowDialog() == DialogResult.OK)
                                 {
-                                    browser.MainFrame.ExecuteJavaScriptAsync("jQuery('#captcha_text').val('" + dialog.Result + "');" +
+                                    browser.MainFrame.ExecuteJavaScriptAsync("jQuery('#captcha_text').val('" + currentCaptchaDialog.Result + "');" +
                                          "CreateAccount();");
                                 }
                             }
                             catch { }
                         }));
+                    });
+            }
+            else if(CodeInputDialog.captchaProcessor!=null && checkBox_auto_process_vcode.Checked)
+            {
+                browser.MainFrame.EvaluateScriptAsync("jQuery('#error_display').css('display')!='none'?'true':'false'",timeout: TimeSpan.FromMilliseconds(100)).ContinueWith((r) =>
+                    {
+                        if(r.IsFaulted || !r.Result.Success || !vcode_shown || currentCaptchaDialog==null || currentCaptchaDialog.Result.Length==0)
+                        {
+                            return;
+                        }
+                        if(r.Result.Result.ToString()=="true")
+                        {
+                            currentCaptchaDialog.Result = "";
+                            CodeInputDialog.captchaProcessor.reportError(currentCaptchaDialog.CaptchaIdentifier);
+                            button1.PerformClick();
+                        }
                     });
             }
         }

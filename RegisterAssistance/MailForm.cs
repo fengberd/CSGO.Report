@@ -10,7 +10,7 @@ namespace RegisterAssistance
     public partial class MailForm : Form
     {
         public MainForm main;
-        public ImapClient client = new ImapClient("outlook.office365.com",993,true);
+        public ImapClient client;
 
         public MailForm(MainForm main)
         {
@@ -86,11 +86,7 @@ namespace RegisterAssistance
 
         private void MailForm_Load(object sender,EventArgs e)
         {
-            try
-            {
-                client.Login("report_bot@berd.moe",main.mailPassword,AuthMethod.Login);
-            }
-            catch { }
+            tryLogin();
             if(!client.Authed)
             {
                 MessageBox.Show("Can't log in to mail server.","Error",MessageBoxButtons.OK,MessageBoxIcon.Error);
@@ -112,10 +108,22 @@ namespace RegisterAssistance
                 {
                     while(!IsDisposed)
                     {
-                        var mails = client.Search(SearchCondition.Undeleted().And(SearchCondition.Unseen()).And(SearchCondition.From("noreply@steampowered.com")));
-                        foreach(uint id in mails)
+                        try
                         {
-                            processMessage(id);
+                            if(!client.Authed)
+                            {
+                                throw new Exception();
+                            }
+                            var mails = client.Search(SearchCondition.Undeleted().And(SearchCondition.Unseen()).And(SearchCondition.From("noreply@steampowered.com")));
+                            foreach(uint id in mails)
+                            {
+                                processMessage(id);
+                            }
+                        }
+                        catch
+                        {
+                            tryLogin();
+                            continue;
                         }
                         Thread.Sleep(1000);
                     }
@@ -124,6 +132,25 @@ namespace RegisterAssistance
                     IsBackground = true
                 }.Start();
             }
+        }
+
+        private void tryLogin()
+        {
+            try
+            {
+                if(client != null)
+                {
+                    try
+                    {
+                        client.Logout();
+                        client.Dispose();
+                    }
+                    catch { }
+                }
+                client = new ImapClient("outlook.office365.com",993,true);
+                client.Login("report_bot@berd.moe",main.mailPassword,AuthMethod.Login);
+            }
+            catch { }
         }
 
         private void MailForm_FormClosed(object sender,FormClosedEventArgs e)

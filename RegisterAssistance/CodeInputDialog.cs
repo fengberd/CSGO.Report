@@ -42,10 +42,12 @@ namespace RegisterAssistance
             }
         }
 
-        private void CodeInputDialog_Load(object sender,System.EventArgs e)
+        private void CodeInputDialog_Load(object sender,EventArgs e)
         {
-            if(captchaProcessor != null)
+            if(captchaProcessor != null && main.checkBox_auto_process_vcode.Checked)
             {
+                Top = 0;
+                Left = Screen.FromControl(this).Bounds.Right - Width;
                 CaptchaIdentifier = captchaProcessor.submitImage(pictureBox1.Image);
                 if(CaptchaIdentifier != null)
                 {
@@ -57,6 +59,16 @@ namespace RegisterAssistance
                             var code = captchaProcessor.getResult(CaptchaIdentifier);
                             if(code != null)
                             {
+                                if(code.Length != 6)
+                                {
+                                    captchaProcessor.reportError(CaptchaIdentifier);
+                                    CaptchaIdentifier = captchaProcessor.submitImage(pictureBox1.Image);
+                                    if(CaptchaIdentifier == null)
+                                    {
+                                        break;
+                                    }
+                                    continue;
+                                }
                                 Invoke(new Action(() =>
                                 {
                                     Result = code;
