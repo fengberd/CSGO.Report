@@ -262,6 +262,7 @@ namespace Medusa
                         {
                             kv.Value.QueueReport(info);
                         }
+                        result["matchid"] = matchID;
                         result["success"] = true;
                         result["message"] = "Abusive Text:" + info.AbusiveText + "<br />" +
                             "Abusive Voice:" + info.AbusiveVoice + "<br />" +

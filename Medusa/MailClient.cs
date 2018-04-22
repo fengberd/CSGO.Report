@@ -96,10 +96,6 @@ namespace Medusa
                         {
                             deleteMail(id);
                         }
-                        else
-                        {
-
-                        }
                     }
                 }
             }

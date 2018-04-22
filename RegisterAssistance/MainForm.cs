@@ -8,8 +8,6 @@ using CefSharp;
 using CefSharp.WinForms;
 
 using RegisterAssistance.captcha;
-using System.Drawing.Imaging;
-using System.Runtime.InteropServices;
 
 namespace RegisterAssistance
 {
