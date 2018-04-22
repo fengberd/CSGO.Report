@@ -144,6 +144,7 @@ namespace Medusa
             var query = accountManager.Accounts.Values.Where((a) => a.WaitingForCode && a.Username.ToLower() == username);
             if(query.Count() == 0)
             {
+                Logger.Warning("[Mail] Account " + username + " isn't waiting for code.");
                 return false;
             }
             var account = query.First();

@@ -26,21 +26,13 @@ namespace Medusa
             }
             else
             {
-                if(client.Supports("IDLE"))
-                {
-                    client.IdleError += (s,ev) =>
-                    {
-                        Logger.Error(ev.Exception);
-                    };
-                    client.NewMessage += (s,ev) => processMessage(ev.MessageUID);
-                }
                 new Thread(new ThreadStart(() =>
                 {
                     while(true)
                     {
                         try
                         {
-                            var mails = client.Search(SearchCondition.Undeleted().And(SearchCondition.Unseen()).And(SearchCondition.From("noreply@steampowered.com")));
+                            var mails = client.Search(SearchCondition.Undeleted().And(SearchCondition.Unflagged()).And(SearchCondition.Unseen()).And(SearchCondition.From("noreply@steampowered.com")));
                             foreach(uint id in mails)
                             {
                                 processMessage(id);
@@ -85,7 +77,7 @@ namespace Medusa
         {
             try
             {
-                var message = client.GetMessage(id,FetchOptions.TextOnly,false);
+                var message = client.GetMessage(id,FetchOptions.TextOnly);
                 var data = message.Body.Replace("\r\n","\n");
                 if(data.Contains("Here is the Steam Guard code you need to login to account "))
                 {
@@ -95,6 +87,11 @@ namespace Medusa
                         if(Program.MailCodeRecieved(match.Groups[1].Value.ToLower(),match.Groups[2].Value))
                         {
                             deleteMail(id);
+                        }
+                        else
+                        {
+                            client.AddMessageFlags(id,null,MessageFlag.Flagged);
+                            client.RemoveMessageFlags(id,null,MessageFlag.Seen);
                         }
                     }
                 }

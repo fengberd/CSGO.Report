@@ -147,7 +147,7 @@ namespace Medusa.utils
                                 }
                             });
                         }
-                        FailReportCounter = 30 * 20; // Fail the action if no response in 30s.
+                        FailReportCounter = 60 * 20; // Fail the action if no response in 1min.
                         ProcessingReport = true;
                     }
                 }
@@ -304,7 +304,7 @@ namespace Medusa.utils
                 AccountManager.DelayedLoginQueue.Enqueue(this);
             }
             LoggedIn = false;
-            ProcessingReport = WaitingForCode = GameRunning = GameInitalized = false;
+            ProcessingReport = GameRunning = GameInitalized = false;
         }
 
         protected void OnLoggedOn(SteamUser.LoggedOnCallback callback)
