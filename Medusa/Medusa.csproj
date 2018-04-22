@@ -101,11 +101,11 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="utils\Account.cs" />
-    <Compile Include="utils\AccountCollection.cs" />
     <Compile Include="utils\AccountDelayAction.cs" />
     <Compile Include="utils\AccountJson.cs" />
     <Compile Include="utils\DebugListener.cs" />
     <Compile Include="utils\ReportInfo.cs" />
+    <Compile Include="utils\SendInfo.cs" />
     <Compile Include="utils\SentryFile.cs" />
     <Compile Include="utils\ShareCode.cs" />
     <Compile Include="utils\SteamIdUtil.cs" />

@@ -20,7 +20,7 @@ namespace Medusa.utils
         public int FailReportCounter = -1;
         public bool Connected => steamClient.IsConnected;
         public bool DelayedActionsEmpty => actions.Count == 0;
-        public bool LoggedIn = false, ProcessingReport = false, WaitingForCode = false, GameRunning = false, GameInitalized = false;
+        public bool LoggedIn = false,WatchingGame=false, ProcessingReport = false, WaitingForCode = false, GameRunning = false, GameInitalized = false;
         public string AuthCode = null, TwoFactorCode = null;
 
         public bool Protected = false;
@@ -37,6 +37,7 @@ namespace Medusa.utils
 
         private CallbackManager callbackManager;
 
+        private Queue<SendInfo> sendQueue = new Queue<SendInfo>();
         private Queue<ReportInfo> reportQueue = new Queue<ReportInfo>();
         private List<AccountDelayAction> actions = new List<AccountDelayAction>();
 
@@ -67,6 +68,28 @@ namespace Medusa.utils
             });
 
             callbackManager.Subscribe<SteamGameCoordinator.MessageCallback>(OnGCMessage);
+        }
+
+        public bool ProcessSendQueue()
+        {
+            lock(sendQueue)
+            {
+                if(sendQueue.Count > 0)
+                {
+                    var item = sendQueue.Dequeue();
+                    switch(item.Type)
+                    {
+                    case SendInfo.SendType.SteamClient:
+                        steamClient.Send((IClientMsg)item.Packet);
+                        break;
+                    case SendInfo.SendType.SteamGameCoordinator:
+                        steamGameCoordinator.Send((IClientGCMsg)item.Packet,APPID_CSGO);
+                        break;
+                    }
+                    return true;
+                }
+            }
+            return false;
         }
 
         public void Tick(long Tick)
@@ -103,20 +126,27 @@ namespace Medusa.utils
                     if(GameInitalized)
                     {
                         var report = reportQueue.Peek();
-                        steamGameCoordinator.Send(new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_ClientReportPlayer>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportPlayer)
+                        lock(sendQueue)
                         {
-                            Body =
+                            sendQueue.Enqueue(new SendInfo()
                             {
-                                account_id = report.SteamID.AccountID,
-                                match_id = report.MatchID,
-                                rpt_aimbot = Convert.ToUInt32(report.AimHacking),
-                                rpt_wallhack = Convert.ToUInt32(report.WallHacking),
-                                rpt_speedhack = Convert.ToUInt32(report.OtherHacking),
-                                rpt_teamharm = Convert.ToUInt32(report.Griefing),
-                                rpt_textabuse = Convert.ToUInt32(report.AbusiveText),
-                                rpt_voiceabuse = Convert.ToUInt32(report.AbusiveVoice)
-                            }
-                        },APPID_CSGO);
+                                Type = SendInfo.SendType.SteamGameCoordinator,
+                                Packet = new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_ClientReportPlayer>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportPlayer)
+                                {
+                                    Body =
+                                    {
+                                        account_id = report.SteamID.AccountID,
+                                        match_id = report.MatchID,
+                                        rpt_aimbot = Convert.ToUInt32(report.AimHacking),
+                                        rpt_wallhack = Convert.ToUInt32(report.WallHacking),
+                                        rpt_speedhack = Convert.ToUInt32(report.OtherHacking),
+                                        rpt_teamharm = Convert.ToUInt32(report.Griefing),
+                                        rpt_textabuse = Convert.ToUInt32(report.AbusiveText),
+                                        rpt_voiceabuse = Convert.ToUInt32(report.AbusiveVoice)
+                                    }
+                                }
+                            });
+                        }
                         FailReportCounter = 30 * 20; // Fail the action if no response in 30s.
                         ProcessingReport = true;
                     }
@@ -181,18 +211,29 @@ namespace Medusa.utils
             }
         }
 
-        protected void UpdateGameStatus()
+        protected void SendGameStatus()
         {
             var clientGamesPlayed = new ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayed);
-            if(GameRunning)
+            lock(sendQueue)
             {
-                clientGamesPlayed.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed()
+                if(GameRunning)
                 {
-                    game_id = APPID_CSGO
+                    clientGamesPlayed.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed()
+                    {
+                        game_id = APPID_CSGO
+                    });
+                    sendQueue.Enqueue(new SendInfo()
+                    {
+                        Type = SendInfo.SendType.SteamGameCoordinator,
+                        Packet = new ClientGCMsgProtobuf<CMsgClientHello>((uint)EGCBaseClientMsg.k_EMsgGCClientHello)
+                    });
+                }
+                sendQueue.Enqueue(new SendInfo()
+                {
+                    Type = SendInfo.SendType.SteamClient,
+                    Packet = clientGamesPlayed
                 });
-                AddDelayAction(2,() => steamGameCoordinator.Send(new ClientGCMsgProtobuf<CMsgClientHello>((uint)EGCBaseClientMsg.k_EMsgGCClientHello),APPID_CSGO));
             }
-            steamClient.Send(clientGamesPlayed);
         }
 
         protected void StartGame()
@@ -201,15 +242,9 @@ namespace Medusa.utils
             {
                 return;
             }
-            var clientGamesPlayed = new ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayed);
-            clientGamesPlayed.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed()
-            {
-                game_id = APPID_CSGO
-            });
             GameRunning = true;
             GameInitalized = false;
-            steamClient.Send(clientGamesPlayed);
-            AddDelayAction(2,() => steamGameCoordinator.Send(new ClientGCMsgProtobuf<CMsgClientHello>((uint)EGCBaseClientMsg.k_EMsgGCClientHello),APPID_CSGO));
+            SendGameStatus();
         }
 
         protected void StopGame()
@@ -219,7 +254,7 @@ namespace Medusa.utils
                 return;
             }
             GameRunning = GameInitalized = false;
-            steamClient.Send(new ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayed));
+            SendGameStatus();
         }
 
         #region Steam Callbacks
@@ -280,7 +315,7 @@ namespace Medusa.utils
                 steamFriends.SetPersonaState(EPersonaState.Online);
                 Logger.Info(PREFIX + "Successfully logged in to steam.");
                 LoggedIn = true;
-                UpdateGameStatus();
+                SendGameStatus();
                 break;
             case EResult.AccountLogonDenied:
             case EResult.AccountLoginDeniedNeedTwoFactor:

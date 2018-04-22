@@ -133,16 +133,13 @@ namespace Medusa
 
         public static void MailCodeRecieved(string username,string code)
         {
-            foreach(var group in accountManager.AccountGroups.Values)
+            foreach(var account in accountManager.Accounts.Values)
             {
-                foreach(var account in group)
+                if(account.WaitingForCode && account.Username.ToLower() == username)
                 {
-                    if(account.WaitingForCode && account.Username.ToLower() == username)
-                    {
-                        Logger.Info("[Mail] Recieved code for account " + account.Username);
-                        account.AuthCode = code;
-                        account.Connect();
-                    }
+                    Logger.Info("[Mail] Recieved code for account " + account.Username);
+                    account.AuthCode = code;
+                    account.Connect();
                 }
             }
         }
@@ -156,24 +153,17 @@ namespace Medusa
 
         public static void ProcessStatus(HttpListenerContext context,IDictionary<string,string> data)
         {
-            int online = 0, total = 0;
-            var groups = new Dictionary<int,int>();
-            foreach(var kv in accountManager.AccountGroups)
-            {
-                total += kv.Value.Count;
-                online += kv.Value.AvailableCount;
-                groups.Add(kv.Key,kv.Value.AvailableCount);
-            }
+            int online = accountManager.Accounts.Values.Where((a) => a.LoggedIn).Count(), total = accountManager.Accounts.Count;
             Server.SendResult(context,Body: JsonConvert.SerializeObject(new Dictionary<string,object>()
             {
                 { "success",true },
-                { "groups",groups },
+                { "accounts",accountManager.Accounts.Keys },
                 { "accounts",new Dictionary<string,int>()
                     {
                         { "online",online },
                         { "total",total }
                     }
-               },
+                },
                 { "uptime",GetUptime() }
             }));
         }
@@ -209,11 +199,11 @@ namespace Medusa
             {
                 { "success",false }
             };
-            if(!data.ContainsKey("id") || !data.ContainsKey("match") || !data.ContainsKey("group") || !data.ContainsKey("flags") || !int.TryParse(data["group"],out int group) || !int.TryParse(data["flags"],out int flags))
+            if(!data.ContainsKey("id") || !data.ContainsKey("match") || !data.ContainsKey("account") || !data.ContainsKey("flags") || !int.TryParse(data["flags"],out int flags))
             {
                 result["message"] = "参数错误";
             }
-            else if(group == -1 || !accountManager.AccountGroups.ContainsKey(group))
+            else if(!data["account"].Split(',').All(accountManager.Accounts.ContainsKey))
             {
                 result["message"] = "账户组不存在";
             }
@@ -256,15 +246,14 @@ namespace Medusa
                             WallHacking = (flags & FLAG_WALL_HACKING) == FLAG_WALL_HACKING,
                             OtherHacking = (flags & FLAG_OTHER_HACKING) == FLAG_OTHER_HACKING
                         };
-                        var accounts = accountManager.AccountGroups[group];
+                        var submitted = data["account"].Split(',');
+                        var accounts = accountManager.Accounts.Where((kv) => submitted.Contains(kv.Key));
                         List<string> accounts_name = new List<string>();
-                        foreach(var account in accounts)
+                        foreach(var kv in accounts)
                         {
-                            account.QueueReport(info);
-                            accounts_name.Add(account.Username);
+                            kv.Value.QueueReport(info);
                         }
                         result["success"] = true;
-                        result["accounts"] = accounts_name;
                         result["message"] = "Abusive Text:" + info.AbusiveText + "<br />" +
                             "Abusive Voice:" + info.AbusiveVoice + "<br />" +
                             "Griefing:" + info.Griefing + "<br />" +
@@ -283,19 +272,12 @@ namespace Medusa
 
         public static void ProcessLoginFailed(HttpListenerContext context,IDictionary<string,string> data)
         {
-            int counter = 0;
-            accountManager.AccountGroups.Values.ToList().ForEach((group) => group.ForEach((account) =>
-            {
-                if(account.LoggedIn == false && !account.Connected && !AccountManager.DelayedLoginQueue.Contains(account) && account.DelayedActionsEmpty)
-                {
-                    counter++;
-                    AccountManager.DelayedLoginQueue.Enqueue(account);
-                }
-            }));
+            var target = accountManager.Accounts.Values.Where((a) => !a.LoggedIn && !a.Connected && !AccountManager.DelayedLoginQueue.Contains(a) && a.DelayedActionsEmpty).ToList();
+            target.ForEach(AccountManager.DelayedLoginQueue.Enqueue);
             Server.SendResult(context,Body: JsonConvert.SerializeObject(new Dictionary<string,object>()
             {
                 { "success",true },
-                { "message","Added "+counter+" accounts into login queue." }
+                { "message","Added " + target.Count + " accounts into login queue." }
             }));
         }
 
