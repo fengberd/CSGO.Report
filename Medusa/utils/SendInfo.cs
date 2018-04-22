@@ -1,8 +1,4 @@
-﻿using System;
-
-using SteamKit2;
-
-namespace Medusa.utils
+﻿namespace Medusa.utils
 {
     public class SendInfo
     {

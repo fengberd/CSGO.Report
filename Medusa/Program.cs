@@ -31,6 +31,14 @@ namespace Medusa
 
         static void Main(string[] args)
         {
+            AppDomain.CurrentDomain.UnhandledException += (sender,ev) =>
+            {
+                try
+                {
+                    Logger.Fatal(ev.ExceptionObject);
+                }
+                catch { }
+            };
             if(Environment.OSVersion.Platform == PlatformID.Unix && File.Exists("System.Net.Http.dll"))
             {
                 File.Delete("System.Net.Http.dll");
@@ -131,17 +139,18 @@ namespace Medusa
             }
         }
 
-        public static void MailCodeRecieved(string username,string code)
+        public static bool MailCodeRecieved(string username,string code)
         {
-            foreach(var account in accountManager.Accounts.Values)
+            var query = accountManager.Accounts.Values.Where((a) => a.WaitingForCode && a.Username.ToLower() == username);
+            if(query.Count() == 0)
             {
-                if(account.WaitingForCode && account.Username.ToLower() == username)
-                {
-                    Logger.Info("[Mail] Recieved code for account " + account.Username);
-                    account.AuthCode = code;
-                    account.Connect();
-                }
+                return false;
             }
+            var account = query.First();
+            Logger.Info("[Mail] Recieved code for account " + account.Username);
+            account.AuthCode = code;
+            account.Connect();
+            return true;
         }
 
         #region Request Processing Functions
@@ -157,11 +166,11 @@ namespace Medusa
             Server.SendResult(context,Body: JsonConvert.SerializeObject(new Dictionary<string,object>()
             {
                 { "success",true },
-                { "accounts",accountManager.Accounts.Keys },
-                { "accounts",new Dictionary<string,int>()
+                { "accounts",new Dictionary<string,object>()
                     {
                         { "online",online },
-                        { "total",total }
+                        { "total",total },
+                        { "available_keys",accountManager.Accounts.Keys.Where((k)=>accountManager.Accounts[k].LoggedIn) }
                     }
                 },
                 { "uptime",GetUptime() }

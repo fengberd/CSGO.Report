@@ -20,7 +20,7 @@ namespace Medusa.utils
         public int FailReportCounter = -1;
         public bool Connected => steamClient.IsConnected;
         public bool DelayedActionsEmpty => actions.Count == 0;
-        public bool LoggedIn = false,WatchingGame=false, ProcessingReport = false, WaitingForCode = false, GameRunning = false, GameInitalized = false;
+        public bool LoggedIn = false, WatchingGame = false, ProcessingReport = false, WaitingForCode = false, GameRunning = false, GameInitalized = false;
         public string AuthCode = null, TwoFactorCode = null;
 
         public bool Protected = false;
@@ -213,20 +213,20 @@ namespace Medusa.utils
 
         protected void SendGameStatus()
         {
-            var clientGamesPlayed = new ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayed);
             lock(sendQueue)
             {
+                var clientGamesPlayed = new ClientMsgProtobuf<CMsgClientGamesPlayed>(EMsg.ClientGamesPlayed);
                 if(GameRunning)
                 {
                     clientGamesPlayed.Body.games_played.Add(new CMsgClientGamesPlayed.GamePlayed()
                     {
                         game_id = APPID_CSGO
                     });
-                    sendQueue.Enqueue(new SendInfo()
+                    AddDelayAction(2,() => sendQueue.Enqueue(new SendInfo()
                     {
                         Type = SendInfo.SendType.SteamGameCoordinator,
                         Packet = new ClientGCMsgProtobuf<CMsgClientHello>((uint)EGCBaseClientMsg.k_EMsgGCClientHello)
-                    });
+                    }));
                 }
                 sendQueue.Enqueue(new SendInfo()
                 {
@@ -315,7 +315,11 @@ namespace Medusa.utils
                 steamFriends.SetPersonaState(EPersonaState.Online);
                 Logger.Info(PREFIX + "Successfully logged in to steam.");
                 LoggedIn = true;
-                SendGameStatus();
+                GameInitalized = false;
+                if(GameRunning)
+                {
+                    SendGameStatus();
+                }
                 break;
             case EResult.AccountLogonDenied:
             case EResult.AccountLoginDeniedNeedTwoFactor:

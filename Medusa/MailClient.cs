@@ -85,15 +85,21 @@ namespace Medusa
         {
             try
             {
-                var message = client.GetMessage(id,FetchOptions.TextOnly);
+                var message = client.GetMessage(id,FetchOptions.TextOnly,false);
                 var data = message.Body.Replace("\r\n","\n");
                 if(data.Contains("Here is the Steam Guard code you need to login to account "))
                 {
                     var match = new Regex("Here is the Steam Guard code you need to login to account (.+)\\:\n\n([A-Z0-9]{5})\n").Match(data);
                     if(match.Success)
                     {
-                        deleteMail(id);
-                        Program.MailCodeRecieved(match.Groups[1].Value.ToLower(),match.Groups[2].Value);
+                        if(Program.MailCodeRecieved(match.Groups[1].Value.ToLower(),match.Groups[2].Value))
+                        {
+                            deleteMail(id);
+                        }
+                        else
+                        {
+
+                        }
                     }
                 }
             }

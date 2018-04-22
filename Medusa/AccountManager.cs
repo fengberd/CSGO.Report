@@ -22,7 +22,7 @@ namespace Medusa
 
         public AccountManager(string json)
         {
-            var parsed = JsonConvert.DeserializeObject<List<AccountJson>>(json);
+            var parsed = JsonConvert.DeserializeObject<ICollection<AccountJson>>(json);
             int count = 0;
             foreach(var parsedAccount in parsed)
             {
