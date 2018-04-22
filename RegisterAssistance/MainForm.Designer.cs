@@ -70,6 +70,8 @@ namespace RegisterAssistance
             this.radioButton_default_register = new System.Windows.Forms.RadioButton();
             this.radioButton_default_login = new System.Windows.Forms.RadioButton();
             this.timer_get_vcode = new System.Windows.Forms.Timer(this.components);
+            this.checkBox_auto_privacy = new System.Windows.Forms.CheckBox();
+            this.checkBox_direct_go_privacy = new System.Windows.Forms.CheckBox();
             this.tabControl1.SuspendLayout();
             this.tabPage_steam.SuspendLayout();
             this.tabPage_settings.SuspendLayout();
@@ -252,6 +254,7 @@ namespace RegisterAssistance
             this.flowLayoutPanel3.Controls.Add(this.checkBox_auto_process_vcode);
             this.flowLayoutPanel3.Controls.Add(this.button5);
             this.flowLayoutPanel3.Controls.Add(this.button4);
+            this.flowLayoutPanel3.Controls.Add(this.checkBox_direct_go_privacy);
             this.flowLayoutPanel3.Dock = System.Windows.Forms.DockStyle.Fill;
             this.flowLayoutPanel3.Location = new System.Drawing.Point(3, 17);
             this.flowLayoutPanel3.Name = "flowLayoutPanel3";
@@ -420,6 +423,7 @@ namespace RegisterAssistance
             // 
             this.flowLayoutPanel1.Controls.Add(this.checkBox_auto_login);
             this.flowLayoutPanel1.Controls.Add(this.checkBox_auto_profile);
+            this.flowLayoutPanel1.Controls.Add(this.checkBox_auto_privacy);
             this.flowLayoutPanel1.Controls.Add(this.checkBox_auto_cdk);
             this.flowLayoutPanel1.Controls.Add(this.checkBox_auto_avatar);
             this.flowLayoutPanel1.Controls.Add(this.checkBox_auto_group);
@@ -460,7 +464,7 @@ namespace RegisterAssistance
             this.checkBox_auto_cdk.AutoSize = true;
             this.checkBox_auto_cdk.Checked = true;
             this.checkBox_auto_cdk.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_auto_cdk.Location = new System.Drawing.Point(3, 47);
+            this.checkBox_auto_cdk.Location = new System.Drawing.Point(3, 69);
             this.checkBox_auto_cdk.Name = "checkBox_auto_cdk";
             this.checkBox_auto_cdk.Size = new System.Drawing.Size(114, 16);
             this.checkBox_auto_cdk.TabIndex = 2;
@@ -472,7 +476,7 @@ namespace RegisterAssistance
             this.checkBox_auto_avatar.AutoSize = true;
             this.checkBox_auto_avatar.Checked = true;
             this.checkBox_auto_avatar.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_auto_avatar.Location = new System.Drawing.Point(3, 69);
+            this.checkBox_auto_avatar.Location = new System.Drawing.Point(3, 91);
             this.checkBox_auto_avatar.Name = "checkBox_auto_avatar";
             this.checkBox_auto_avatar.Size = new System.Drawing.Size(132, 16);
             this.checkBox_auto_avatar.TabIndex = 3;
@@ -484,7 +488,7 @@ namespace RegisterAssistance
             this.checkBox_auto_group.AutoSize = true;
             this.checkBox_auto_group.Checked = true;
             this.checkBox_auto_group.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_auto_group.Location = new System.Drawing.Point(3, 91);
+            this.checkBox_auto_group.Location = new System.Drawing.Point(3, 113);
             this.checkBox_auto_group.Name = "checkBox_auto_group";
             this.checkBox_auto_group.Size = new System.Drawing.Size(114, 16);
             this.checkBox_auto_group.TabIndex = 4;
@@ -496,7 +500,7 @@ namespace RegisterAssistance
             this.checkBox_auto_disable_steam_guard.AutoSize = true;
             this.checkBox_auto_disable_steam_guard.Checked = true;
             this.checkBox_auto_disable_steam_guard.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox_auto_disable_steam_guard.Location = new System.Drawing.Point(3, 113);
+            this.checkBox_auto_disable_steam_guard.Location = new System.Drawing.Point(3, 135);
             this.checkBox_auto_disable_steam_guard.Name = "checkBox_auto_disable_steam_guard";
             this.checkBox_auto_disable_steam_guard.Size = new System.Drawing.Size(168, 16);
             this.checkBox_auto_disable_steam_guard.TabIndex = 15;
@@ -540,6 +544,28 @@ namespace RegisterAssistance
             // 
             this.timer_get_vcode.Interval = 550;
             this.timer_get_vcode.Tick += new System.EventHandler(this.timer_get_vcode_Tick);
+            // 
+            // checkBox_auto_privacy
+            // 
+            this.checkBox_auto_privacy.AutoSize = true;
+            this.checkBox_auto_privacy.Checked = true;
+            this.checkBox_auto_privacy.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBox_auto_privacy.Location = new System.Drawing.Point(3, 47);
+            this.checkBox_auto_privacy.Name = "checkBox_auto_privacy";
+            this.checkBox_auto_privacy.Size = new System.Drawing.Size(192, 16);
+            this.checkBox_auto_privacy.TabIndex = 16;
+            this.checkBox_auto_privacy.Text = "Auto Change Privacy Settings";
+            this.checkBox_auto_privacy.UseVisualStyleBackColor = true;
+            // 
+            // checkBox_direct_go_privacy
+            // 
+            this.checkBox_direct_go_privacy.AutoSize = true;
+            this.checkBox_direct_go_privacy.Location = new System.Drawing.Point(3, 120);
+            this.checkBox_direct_go_privacy.Name = "checkBox_direct_go_privacy";
+            this.checkBox_direct_go_privacy.Size = new System.Drawing.Size(174, 16);
+            this.checkBox_direct_go_privacy.TabIndex = 16;
+            this.checkBox_direct_go_privacy.Text = "Direct go to privacy page";
+            this.checkBox_direct_go_privacy.UseVisualStyleBackColor = true;
             // 
             // MainForm
             // 
@@ -614,5 +640,7 @@ namespace RegisterAssistance
         private System.Windows.Forms.CheckBox checkBox_direct_go_2fa;
         internal System.Windows.Forms.CheckBox checkBox_auto_process_vcode;
         private System.Windows.Forms.Timer timer_get_vcode;
+        private System.Windows.Forms.CheckBox checkBox_auto_privacy;
+        private System.Windows.Forms.CheckBox checkBox_direct_go_privacy;
     }
 }

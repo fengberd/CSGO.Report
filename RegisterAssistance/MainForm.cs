@@ -234,7 +234,9 @@ namespace RegisterAssistance
                     }
                     browser.MainFrame.ExecuteJavaScriptAsync("if(" + (checkBox_override_profile_check.Checked ? "false)" : "jQuery('#personaName').val()=='CSGO.Report_Bot" + data.Id + "')") +
                         "{" +
-                            (checkBox_auto_go_active.Checked ? (checkBox_direct_go_2fa.Checked? "document.location='https://store.steampowered.com/twofactor/manage';" : "document.location='https://store.steampowered.com/account/registerkey/';") : "") +
+                            (checkBox_auto_go_active.Checked ?
+                                (checkBox_direct_go_privacy.Checked ? "jQuery('a:contains(My Privacy Settings)')[1].click();" : 
+                                (checkBox_direct_go_2fa.Checked? "document.location='https://store.steampowered.com/twofactor/manage';" :"document.location='https://store.steampowered.com/account/registerkey/';")) : "") +
                         "}" +
                         "else" +
                         "{" +
@@ -265,6 +267,29 @@ namespace RegisterAssistance
                                     "alert(e);" +
                                 "}" +
                             "});" +
+                        "}");
+                }
+                else if((url.StartsWith("steamcommunity.com/profiles/") || url.StartsWith("steamcommunity.com/id/")) && (url.EndsWith("/edit/settings")))
+                {
+                    if(!checkBox_auto_privacy.Checked)
+                    {
+                        return;
+                    }
+                    browser.MainFrame.ExecuteJavaScriptAsync("if(jQuery('.ProfilePrivacyDropDown')[2].innerHTML.startsWith('Public'))" +
+                        "{" +
+                            (checkBox_auto_go_active.Checked ? (checkBox_direct_go_2fa.Checked ? "document.location='https://store.steampowered.com/twofactor/manage';" : "document.location='https://store.steampowered.com/account/registerkey/';") : "") +
+                        "}" +
+                        "else" +
+                        "{" +
+                            "jQuery('.ProfilePrivacyDropDown')[2].click();jQuery('.popup_menu_item:contains(Public)').click();" +
+                            "____lol=setInterval(function()" +
+                            "{" +
+                                "if(jQuery('.PrivacySaveNotice.Saved').length!=0)" +
+                                "{" +
+                                    "clearInterval(____lol);" +
+                                    (checkBox_auto_go_active.Checked ? (checkBox_direct_go_2fa.Checked ? "document.location='https://store.steampowered.com/twofactor/manage';" : "document.location='https://store.steampowered.com/account/registerkey/';") : "") +
+                                "}" +
+                            "},200);" +
                         "}");
                 }
                 break;
