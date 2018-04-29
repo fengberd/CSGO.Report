@@ -508,14 +508,43 @@ namespace Medusa.utils
                 break;
             case (uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportResponse:
                 {
+                    var response = new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_ClientReportResponse>(msg);
                     var report = actionQueue.Peek() as ReportInfo;
                     if(report == null)
                     {
-                        Logger.Warning(PREFIX + "Something wrong happened,maybe we just failed a report and recieved it's response.");
+                        // IDK why we'll get a ClientReportResponse instead of ClientCommendPlayerQueryResponse
+                        // CSGO things bro ;D
+                        var commend = actionQueue.Peek() as CommendInfo;
+                        if(commend == null)
+                        {
+                            Logger.Warning(PREFIX + "Something wrong happened,maybe we just failed a report and recieved it's response.");
+                            break;
+                        }
+                        if(response.Body.account_idSpecified && commend.SteamID.AccountID != response.Body.account_id)
+                        {
+                            Logger.Warning(PREFIX + "Something wrong happened,maybe we just failed a commend and recieved it's response.");
+                            break;
+                        }
+                        actionQueue.Dequeue();
+                        MedusaWebServer.addLog(new Dictionary<string,object>()
+                        {
+                            { "type", "commend" },
+                            { "username", Username },
+                            { "steamid", commend.SteamID.ConvertToUInt64().ToString() },
+                            { "flags", commend.Flags },
+                            { "time", Utils.Time() },
+                        });
+                        FailActionCounter = -1;
+                        ProcessingAction = false;
+                        Logger.Info(PREFIX + "Successfully commended " + commend.SteamID + ".");
+                        break;
+                    }
+                    if(response.Body.account_idSpecified && report.SteamID.AccountID != response.Body.account_id)
+                    {
+                        Logger.Warning(PREFIX + "Something wrong happened,maybe we just failed a report and recieved it's response(1).");
                         break;
                     }
                     actionQueue.Dequeue();
-                    var response = new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_ClientReportResponse>(msg);
                     MedusaWebServer.addLog(new Dictionary<string,object>()
                     {
                         { "type", "report" },
@@ -528,28 +557,6 @@ namespace Medusa.utils
                     FailActionCounter = -1;
                     ProcessingAction = false;
                     Logger.Info(PREFIX + "Successfully reported " + report.SteamID + ",Confirmation ID:" + response.Body.confirmation_id);
-                }
-                break;
-            case (uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientCommendPlayerQueryResponse:
-                {
-                    var commend = actionQueue.Peek() as CommendInfo;
-                    if(commend == null)
-                    {
-                        Logger.Warning(PREFIX + "Something wrong happened,maybe we just failed a Commend and recieved it's response.");
-                        break;
-                    }
-                    actionQueue.Dequeue();
-                    MedusaWebServer.addLog(new Dictionary<string,object>()
-                    {
-                        { "type", "commend" },
-                        { "username", Username },
-                        { "steamid", commend.SteamID.ConvertToUInt64().ToString() },
-                        { "flags", commend.Flags },
-                        { "time", Utils.Time() },
-                    });
-                    FailActionCounter = -1;
-                    ProcessingAction = false;
-                    Logger.Info(PREFIX + "Successfully commended " + commend.SteamID + ".");
                 }
                 break;
             case (uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchList:
