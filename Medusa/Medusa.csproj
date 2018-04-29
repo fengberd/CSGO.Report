@@ -101,10 +101,13 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <Compile Include="utils\Account.cs" />
-    <Compile Include="utils\AccountDelayAction.cs" />
+    <Compile Include="utils\AccountDelayedAction.cs" />
     <Compile Include="utils\AccountJson.cs" />
+    <Compile Include="utils\actions\GetLiveGameInfo.cs" />
     <Compile Include="utils\DebugListener.cs" />
-    <Compile Include="utils\ReportInfo.cs" />
+    <Compile Include="utils\actions\CommendInfo.cs" />
+    <Compile Include="utils\actions\ActionInfo.cs" />
+    <Compile Include="utils\actions\ReportInfo.cs" />
     <Compile Include="utils\SendInfo.cs" />
     <Compile Include="utils\SentryFile.cs" />
     <Compile Include="utils\ShareCode.cs" />

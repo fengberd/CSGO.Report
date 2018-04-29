@@ -9,6 +9,8 @@ using SteamKit2.GC.CSGO.Internal;
 
 using BakaServer;
 
+using Medusa.utils.actions;
+
 namespace Medusa.utils
 {
     public class Account
@@ -17,16 +19,19 @@ namespace Medusa.utils
 
         public static Config LoginKeys = new Config("loginKeys.ini");
 
-        public int FailReportCounter = -1;
-        public bool Connected => steamClient.IsConnected;
-        public bool DelayedActionsEmpty => actions.Count == 0;
-        public bool LoggedIn = false, WatchingGame = false, ProcessingReport = false, WaitingForCode = false, GameRunning = false, GameInitalized = false;
-        public string AuthCode = null, TwoFactorCode = null;
+        public string PREFIX = "";
 
         public bool Protected = false;
         public string Username, Password, SharedSecret;
 
-        public string PREFIX = "";
+        public bool LoggedIn = false, WaitingForCode = false, Disabled = false, GameRunning = false, GameInitalized = false;
+        public string AuthCode = null, TwoFactorCode = null;
+
+        public bool ProcessingAction = false;
+        public int FailActionCounter = -1;
+
+        public bool Connected => !Disabled && steamClient.IsConnected;
+        public bool DelayedActionsEmpty => actions.Count == 0;
 
         public SentryFile sentry;
 
@@ -38,8 +43,8 @@ namespace Medusa.utils
         private CallbackManager callbackManager;
 
         private Queue<SendInfo> sendQueue = new Queue<SendInfo>();
-        private Queue<ReportInfo> reportQueue = new Queue<ReportInfo>();
-        private List<AccountDelayAction> actions = new List<AccountDelayAction>();
+        private Queue<ActionInfo> actionQueue = new Queue<ActionInfo>();
+        private List<AccountDelayedAction> actions = new List<AccountDelayedAction>();
 
         public Account(string Username,string Password,bool Protected = false,string SharedSecret = "")
         {
@@ -99,7 +104,7 @@ namespace Medusa.utils
             {
                 lock(actions)
                 {
-                    var to_remove = new List<AccountDelayAction>();
+                    var to_remove = new List<AccountDelayedAction>();
                     foreach(var action in actions)
                     {
                         if(--action.SecondsRemain <= 0)
@@ -115,9 +120,9 @@ namespace Medusa.utils
             {
                 return;
             }
-            if(!ProcessingReport)
+            if(!ProcessingAction)
             {
-                if(reportQueue.Count != 0)
+                if(actionQueue.Count != 0)
                 {
                     if(!GameRunning)
                     {
@@ -125,30 +130,71 @@ namespace Medusa.utils
                     }
                     if(GameInitalized)
                     {
-                        var report = reportQueue.Peek();
+                        var action = actionQueue.Peek();
                         lock(sendQueue)
                         {
-                            sendQueue.Enqueue(new SendInfo()
+                            if(action is ReportInfo)
                             {
-                                Type = SendInfo.SendType.SteamGameCoordinator,
-                                Packet = new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_ClientReportPlayer>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportPlayer)
+                                var report = action as ReportInfo;
+                                sendQueue.Enqueue(new SendInfo()
                                 {
-                                    Body =
+                                    Type = SendInfo.SendType.SteamGameCoordinator,
+                                    Packet = new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_ClientReportPlayer>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportPlayer)
                                     {
-                                        account_id = report.SteamID.AccountID,
-                                        match_id = report.MatchID,
-                                        rpt_aimbot = Convert.ToUInt32(report.AimHacking),
-                                        rpt_wallhack = Convert.ToUInt32(report.WallHacking),
-                                        rpt_speedhack = Convert.ToUInt32(report.OtherHacking),
-                                        rpt_teamharm = Convert.ToUInt32(report.Griefing),
-                                        rpt_textabuse = Convert.ToUInt32(report.AbusiveText),
-                                        rpt_voiceabuse = Convert.ToUInt32(report.AbusiveVoice)
+                                        Body =
+                                        {
+                                            account_id = report.SteamID.AccountID,
+                                            match_id = report.MatchID,
+                                            rpt_aimbot = Convert.ToUInt32(report.AimHacking),
+                                            rpt_wallhack = Convert.ToUInt32(report.WallHacking),
+                                            rpt_speedhack = Convert.ToUInt32(report.OtherHacking),
+                                            rpt_teamharm = Convert.ToUInt32(report.Griefing),
+                                            rpt_textabuse = Convert.ToUInt32(report.AbusiveText),
+                                            rpt_voiceabuse = Convert.ToUInt32(report.AbusiveVoice)
+                                        }
                                     }
-                                }
-                            });
+                                });
+                            }
+                            else if(action is CommendInfo)
+                            {
+                                var commend = action as CommendInfo;
+                                sendQueue.Enqueue(new SendInfo()
+                                {
+                                    Type = SendInfo.SendType.SteamGameCoordinator,
+                                    Packet = new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_ClientCommendPlayer>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientCommendPlayer)
+                                    {
+                                        Body =
+                                        {
+                                            account_id = commend.SteamID.AccountID,
+                                            match_id = commend.MatchID,
+                                            commendation = new PlayerCommendationInfo
+                                            {
+                                                cmd_friendly = Convert.ToUInt32(commend.Friendly),
+                                                cmd_teaching = Convert.ToUInt32(commend.GoodTeacher),
+                                                cmd_leader = Convert.ToUInt32( commend.GoodLeader)
+                                            },
+                                            tokens = 0
+                                        }
+                                    }
+                                });
+                            }
+                            else if(action is GetLiveGameInfo)
+                            {
+                                sendQueue.Enqueue(new SendInfo()
+                                {
+                                    Type = SendInfo.SendType.SteamGameCoordinator,
+                                    Packet = new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_MatchListRequestLiveGameForUser>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchListRequestLiveGameForUser)
+                                    {
+                                        Body =
+                                        {
+                                            accountid = action.SteamID.AccountID
+                                        }
+                                    }
+                                });
+                            }
                         }
-                        FailReportCounter = 60 * 20; // Fail the action if no response in 1min.
-                        ProcessingReport = true;
+                        FailActionCounter = 60 * 20;
+                        ProcessingAction = true;
                     }
                 }
                 else if(Program.IsOnlineTimeRange())
@@ -163,18 +209,18 @@ namespace Medusa.utils
                     StopGame();
                 }
             }
-            else if(FailReportCounter > -1 && --FailReportCounter <= 0)
+            else if(FailActionCounter > -1 && --FailActionCounter <= 0)
             {
                 Logger.Error(PREFIX + "No report response recieved.Dropping the failed report info.");
-                FailReportCounter = -1;
-                ProcessingReport = false;
-                reportQueue.Dequeue();
+                FailActionCounter = -1;
+                ProcessingAction = false;
+                actionQueue.Dequeue();
             }
         }
 
         public bool Connect()
         {
-            if(WaitingForCode && AuthCode == null && TwoFactorCode == null)
+            if(Disabled || (WaitingForCode && AuthCode == null && TwoFactorCode == null))
             {
                 return false;
             }
@@ -194,16 +240,13 @@ namespace Medusa.utils
             return true;
         }
 
-        public void QueueReport(ReportInfo info)
-        {
-            reportQueue.Enqueue(info);
-        }
+        public void QueueAction(ActionInfo info) => actionQueue.Enqueue(info);
 
-        public void AddDelayAction(int delay,Action action)
+        public void AddDelayedAction(int delay,Action action)
         {
             lock(actions)
             {
-                actions.Add(new AccountDelayAction()
+                actions.Add(new AccountDelayedAction()
                 {
                     Action = action,
                     SecondsRemain = delay
@@ -222,7 +265,7 @@ namespace Medusa.utils
                     {
                         game_id = APPID_CSGO
                     });
-                    AddDelayAction(2,() => sendQueue.Enqueue(new SendInfo()
+                    AddDelayedAction(2,() => sendQueue.Enqueue(new SendInfo()
                     {
                         Type = SendInfo.SendType.SteamGameCoordinator,
                         Packet = new ClientGCMsgProtobuf<CMsgClientHello>((uint)EGCBaseClientMsg.k_EMsgGCClientHello)
@@ -293,6 +336,8 @@ namespace Medusa.utils
                 ClientOSType = EOSType.Windows10,
                 ClientLanguage = "en-US"
             });
+            WaitingForCode = false;
+            AuthCode = TwoFactorCode = null;
         }
 
         protected void OnDisconnected(SteamClient.DisconnectedCallback callback)
@@ -304,7 +349,7 @@ namespace Medusa.utils
                 AccountManager.DelayedLoginQueue.Enqueue(this);
             }
             LoggedIn = false;
-            ProcessingReport = GameRunning = GameInitalized = false;
+            ProcessingAction = GameRunning = GameInitalized = false;
         }
 
         protected void OnLoggedOn(SteamUser.LoggedOnCallback callback)
@@ -323,9 +368,15 @@ namespace Medusa.utils
                 break;
             case EResult.AccountLogonDenied:
             case EResult.AccountLoginDeniedNeedTwoFactor:
+            case EResult.TwoFactorCodeMismatch:
                 if(!Protected)
                 {
                     Logger.Error(PREFIX + "Requires steam token to log in.");
+                }
+                else if(callback.Result == EResult.TwoFactorCodeMismatch)
+                {
+                    AddDelayedAction(30,() => Connect());
+                    Logger.Error(PREFIX + "Two factor code mismatch.Retrying in 30 seconds...");
                 }
                 else if(callback.Result == EResult.AccountLoginDeniedNeedTwoFactor)
                 {
@@ -344,6 +395,7 @@ namespace Medusa.utils
                 }
                 else if(!Program.config.GetBool("MailClientEnabled"))
                 {
+                    Disabled = true;
                     Logger.Error(PREFIX + "Requires steam token to log in,please configure mail client.");
                 }
                 else
@@ -363,19 +415,21 @@ namespace Medusa.utils
                 }
                 else
                 {
+                    Disabled = true;
                     Logger.Error(PREFIX + "Password incorrect.");
                 }
                 break;
             case EResult.RateLimitExceeded:
                 Logger.Error(PREFIX + "Steam Rate Limit has been reached.Retrying in 30 minutes...");
-                AddDelayAction(1200,() => Connect());
+                AddDelayedAction(1200,() => Connect());
                 break;
             case EResult.AccountDisabled:
+                Disabled = true;
                 Logger.Error(PREFIX + "has been permanently disabled by the Steam network.");
                 break;
             default:
                 Logger.Error(PREFIX + "Unable to login: " + callback.Result + "(" + callback.ExtendedResult + ").Retrying in 10 seconds...");
-                AddDelayAction(10,() => Connect());
+                AddDelayedAction(10,() => Connect());
                 break;
             }
         }
@@ -405,12 +459,15 @@ namespace Medusa.utils
                         switch(response.Body.penalty_reason)
                         {
                         case 10:
+                            Disabled = true;
                             Logger.Error(PREFIX + "Account has been convicted by Overwatch as majorly disruptive.");
                             return;
                         case 11:
+                            Disabled = true;
                             Logger.Error(PREFIX + "Account has been convicted by Overwatch as minorly disruptive.");
                             return;
                         case 14:
+                            Disabled = true;
                             Logger.Error(PREFIX + "Account is permanently untrusted.");
                             return;
                         default:
@@ -428,13 +485,13 @@ namespace Medusa.utils
                                     {
                                         timeString = penalty.Minutes + " Minutes";
                                     }
-
                                     Logger.Warning(PREFIX + "Account has received a Matchmaking cooldown.Retrying in " + penalty.Seconds + " seconds.");
                                     steamClient.Disconnect();
-                                    AddDelayAction(penalty.Seconds,() => Connect());
+                                    AddDelayedAction(penalty.Seconds,() => Connect());
                                     return;
                                 }
                             }
+                            Disabled = true;
                             Logger.Error(PREFIX + "Account has been permanently banned from CS:GO.");
                             return;
                         }
@@ -442,7 +499,8 @@ namespace Medusa.utils
                     else if(response.Body.vac_bannedSpecified && response.Body.vac_banned == 2 && !response.Body.penalty_secondsSpecified)
                     {
                         LoggedIn = false;
-                        Logger.Error(PREFIX + "Account has been banned by VAC,VOLVO ARE YOU KIDDING ME????");
+                        Disabled = true;
+                        Logger.Error(PREFIX + "Account has been banned by VAC.");
                         return;
                     }
                     GameInitalized = true;
@@ -450,19 +508,95 @@ namespace Medusa.utils
                 break;
             case (uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportResponse:
                 {
-                    var report = reportQueue.Dequeue();
-                    var response = new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_ClientReportResponse>(msg);
-                    MedusaWebServer.addReportLog(new Dictionary<string,string>()
+                    var report = actionQueue.Peek() as ReportInfo;
+                    if(report == null)
                     {
-                        { "username",Username },
+                        Logger.Warning(PREFIX + "Something wrong happened,maybe we just failed a report and recieved it's response.");
+                        break;
+                    }
+                    actionQueue.Dequeue();
+                    var response = new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_ClientReportResponse>(msg);
+                    MedusaWebServer.addLog(new Dictionary<string,object>()
+                    {
+                        { "type", "report" },
+                        { "username", Username },
                         { "steamid", report.SteamID.ConvertToUInt64().ToString() },
                         { "matchid", report.MatchID.ToString() },
                         { "reportid", response.Body.confirmation_id.ToString() },
-                        { "time", Utils.Time().ToString() },
+                        { "time", Utils.Time() },
                     });
-                    FailReportCounter = -1;
-                    ProcessingReport = false;
+                    FailActionCounter = -1;
+                    ProcessingAction = false;
                     Logger.Info(PREFIX + "Successfully reported " + report.SteamID + ",Confirmation ID:" + response.Body.confirmation_id);
+                }
+                break;
+            case (uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientCommendPlayerQueryResponse:
+                {
+                    var commend = actionQueue.Peek() as CommendInfo;
+                    if(commend == null)
+                    {
+                        Logger.Warning(PREFIX + "Something wrong happened,maybe we just failed a Commend and recieved it's response.");
+                        break;
+                    }
+                    actionQueue.Dequeue();
+                    MedusaWebServer.addLog(new Dictionary<string,object>()
+                    {
+                        { "type", "commend" },
+                        { "username", Username },
+                        { "steamid", commend.SteamID.ConvertToUInt64().ToString() },
+                        { "flags", commend.Flags },
+                        { "time", Utils.Time() },
+                    });
+                    FailActionCounter = -1;
+                    ProcessingAction = false;
+                    Logger.Info(PREFIX + "Successfully commended " + commend.SteamID + ".");
+                }
+                break;
+            case (uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchList:
+                {
+                    var getLiveGame = actionQueue.Peek() as GetLiveGameInfo;
+                    if(getLiveGame == null)
+                    {
+                        Logger.Warning(PREFIX + "Something wrong happened,maybe we just failed a GetLiveGame and recieved it's response.");
+                        break;
+                    }
+                    actionQueue.Dequeue();
+                    var response = new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_MatchList>(msg);
+                    var matches = new List<Dictionary<string,object>>();
+                    response.Body.matches.ForEach((match) =>
+                    {
+                        if(match.matchidSpecified)
+                        {
+                            var data = new Dictionary<string,object>()
+                            {
+                                { "id", match.matchid },
+                                { "map", match.watchablematchinfo.game_map },
+                                { "status", new Dictionary<string,object>() }
+                            };
+                            int i = 0;
+                            match.roundstats_legacy.reservation.account_ids.ForEach((id) =>
+                            {
+                                ((Dictionary<string,object>)data["status"])[id.ToString()] = new Dictionary<string,int>()
+                                {
+                                    { "kill", match.roundstats_legacy.kills[i] },
+                                    { "assist", match.roundstats_legacy.assists[i] },
+                                    { "death", match.roundstats_legacy.deaths[i] },
+                                    { "score", match.roundstats_legacy.scores[i] },
+                                    { "mvp", match.roundstats_legacy.mvps[i] }
+                                };
+                                i++;
+                            });
+                            matches.Add(data);
+                        }
+                    });
+                    MedusaWebServer.addLog(new Dictionary<string,object>()
+                    {
+                        { "type", "matches" },
+                        { "username", Username },
+                        { "steamid", getLiveGame.SteamID.ConvertToUInt64().ToString() },
+                        { "matches", matches },
+                        { "time", Utils.Time() },
+                    });
                 }
                 break;
             }

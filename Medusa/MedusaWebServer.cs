@@ -9,13 +9,13 @@ namespace Medusa
 {
     public class MedusaWebServer : Server
     {
-        public static List<Dictionary<string,string>> report_log = new List<Dictionary<string,string>>();
+        public static List<Dictionary<string,object>> log = new List<Dictionary<string,object>>();
 
-        public static void addReportLog(Dictionary<string,string> data)
+        public static void addLog(Dictionary<string,object> data)
         {
-            lock(report_log)
+            lock(log)
             {
-                report_log.Add(data);
+                log.Add(data);
             }
         }
 
@@ -33,9 +33,10 @@ namespace Medusa
         protected override void ProcessRequest(HttpListenerContext context)
         {
             var Request = context.Request;
+            var url = Request.Url.AbsolutePath;
             if(Request.HttpMethod != "POST")
             {
-                switch(Request.Url.AbsolutePath)
+                switch(url)
                 {
                 case "/":
                     SendError(context,"520 I Love You");
@@ -53,12 +54,10 @@ namespace Medusa
                     break;
                 case "/log":
                 case "/status":
-                case "/submit":
-                case "/login_failed":
                     SendError(context,StatusCode.E_405);
                     break;
                 default:
-                    SendError(context,StatusCode.E_404);
+                    SendError(context,url.StartsWith("/submit/") || url.StartsWith("/login/") ? StatusCode.E_405 : StatusCode.E_404);
                     break;
                 }
             }
@@ -67,7 +66,7 @@ namespace Medusa
                 var data = ReadData(context);
                 if(data != null)
                 {
-                    if(Request.Url.AbsolutePath == "/" || Request.Url.AbsolutePath == "/favicon.ico")
+                    if(url == "/" || url == "/favicon.ico")
                     {
                         SendError(context,StatusCode.E_405);
                     }
@@ -81,7 +80,7 @@ namespace Medusa
                     }
                     else
                     {
-                        switch(Request.Url.AbsolutePath)
+                        switch(url)
                         {
                         case "/log":
                             Program.ProcessLogs(context,data);
@@ -89,8 +88,17 @@ namespace Medusa
                         case "/status":
                             Program.ProcessStatus(context,data);
                             break;
-                        case "/submit":
-                            Program.ProcessSubmit(context,data);
+                        case "/submit/report":
+                            Program.ProcessSubmitReport(context,data);
+                            break;
+                        case "/submit/commend":
+                            Program.ProcessSubmitCommend(context,data);
+                            break;
+                        case "/submit/livegameinfo":
+                            Program.ProcessSubmitLiveGameInfo(context,data);
+                            break;
+                        case "/login/failed":
+                            Program.ProcessLoginFailed(context,data);
                             break;
                         case "/debug_log":
                             // TODO: We may need a shell
@@ -101,10 +109,12 @@ namespace Medusa
                                 { "message","Debug Log:" + Logger.EnableDebug }
                             }));
                             break;
-                        case "/login_failed":
-                            Program.ProcessLoginFailed(context,data);
-                            break;
                         default:
+                            if(url.StartsWith("/login/username/"))
+                            {
+                                // TODO: Login by username
+                                break;
+                            }
                             SendError(context,StatusCode.E_404);
                             break;
                         }

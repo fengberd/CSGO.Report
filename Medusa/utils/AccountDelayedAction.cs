@@ -2,7 +2,7 @@
 
 namespace Medusa.utils
 {
-    public class AccountDelayAction
+    public class AccountDelayedAction
     {
         public Action Action;
         public int SecondsRemain = 0;

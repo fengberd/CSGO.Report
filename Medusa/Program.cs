@@ -12,7 +12,9 @@ using BakaServer;
 using Newtonsoft.Json;
 
 using Medusa.utils;
-using static Medusa.utils.ReportInfo;
+using Medusa.utils.actions;
+using static Medusa.utils.actions.ReportInfo;
+using static Medusa.utils.actions.CommendInfo;
 
 namespace Medusa
 {
@@ -186,24 +188,24 @@ namespace Medusa
             };
             if(data.ContainsKey("remove") && int.TryParse(data["remove"],out int remove))
             {
-                lock(MedusaWebServer.report_log)
+                lock(MedusaWebServer.log)
                 {
-                    MedusaWebServer.report_log.RemoveRange(0,remove);
+                    MedusaWebServer.log.RemoveRange(0,remove);
                     result["message"] = "Removed " + remove + " logs.";
                 }
             }
             else
             {
-                lock(MedusaWebServer.report_log)
+                lock(MedusaWebServer.log)
                 {
-                    result["log"] = MedusaWebServer.report_log;
+                    result["log"] = MedusaWebServer.log;
                     result["message"] = "";
                 }
             }
             Server.SendResult(context,Body: JsonConvert.SerializeObject(result));
         }
 
-        public static void ProcessSubmit(HttpListenerContext context,IDictionary<string,string> data)
+        public static void ProcessSubmitReport(HttpListenerContext context,IDictionary<string,string> data)
         {
             IDictionary<string,object> result = new Dictionary<string,object>()
             {
@@ -215,7 +217,7 @@ namespace Medusa
             }
             else if(!data["account"].Split(',').All(accountManager.Accounts.ContainsKey))
             {
-                result["message"] = "账户组不存在";
+                result["message"] = "账户不存在";
             }
             else
             {
@@ -258,10 +260,9 @@ namespace Medusa
                         };
                         var submitted = data["account"].Split(',');
                         var accounts = accountManager.Accounts.Where((kv) => submitted.Contains(kv.Key));
-                        List<string> accounts_name = new List<string>();
                         foreach(var kv in accounts)
                         {
-                            kv.Value.QueueReport(info);
+                            kv.Value.QueueAction(info);
                         }
                         result["matchid"] = matchID;
                         result["success"] = true;
@@ -281,9 +282,88 @@ namespace Medusa
             Server.SendResult(context,Body: JsonConvert.SerializeObject(result));
         }
 
+        public static void ProcessSubmitCommend(HttpListenerContext context,IDictionary<string,string> data)
+        {
+            IDictionary<string,object> result = new Dictionary<string,object>()
+            {
+                { "success",false }
+            };
+            if(!data.ContainsKey("id") || !data.ContainsKey("account") || !data.ContainsKey("flags") || !int.TryParse(data["flags"],out int flags))
+            {
+                result["message"] = "参数错误";
+            }
+            else if(!data["account"].Split(',').All(accountManager.Accounts.ContainsKey))
+            {
+                result["message"] = "账户不存在";
+            }
+            else
+            {
+                SteamID steamID = SteamIdUtil.Parse(data["id"]);
+                if(steamID != null)
+                {
+                    var info = new CommendInfo()
+                    {
+                        SteamID = steamID,
+                        Flags = flags,
+                        Friendly = (flags & FLAG_FRIENDLY) == FLAG_FRIENDLY,
+                        GoodTeacher = (flags & FLAG_GOOD_TEACHER) == FLAG_GOOD_TEACHER,
+                        GoodLeader = (flags & FLAG_GOOD_LEADER) == FLAG_GOOD_LEADER
+                    };
+                    var submitted = data["account"].Split(',');
+                    var accounts = accountManager.Accounts.Where((kv) => submitted.Contains(kv.Key));
+                    foreach(var kv in accounts)
+                    {
+                        kv.Value.QueueAction(info);
+                    }
+                    result["success"] = true;
+                    result["message"] = "Friendly:" + info.Friendly + "<br />" +
+                        "Good Teacher:" + info.GoodTeacher + "<br />" +
+                        "Good Leader:" + info.GoodLeader;
+                }
+                else
+                {
+                    result["message"] = "无法解析Steam ID,请提供有效的SteamID,SteamID3或SteamID64.";
+                }
+            }
+            Server.SendResult(context,Body: JsonConvert.SerializeObject(result));
+        }
+
+        public static void ProcessSubmitLiveGameInfo(HttpListenerContext context,IDictionary<string,string> data)
+        {
+            IDictionary<string,object> result = new Dictionary<string,object>()
+            {
+                { "success",false }
+            };
+            if(!data.ContainsKey("id") || !data.ContainsKey("account"))
+            {
+                result["message"] = "参数错误";
+            }
+            else if(!accountManager.Accounts.ContainsKey(data["account"]))
+            {
+                result["message"] = "账户不存在";
+            }
+            else
+            {
+                SteamID steamID = SteamIdUtil.Parse(data["id"]);
+                if(steamID != null)
+                {
+                    accountManager.Accounts[data["account"]].QueueAction(new GetLiveGameInfo()
+                    {
+                        SteamID = steamID
+                    });
+                    result["success"] = true;
+                }
+                else
+                {
+                    result["message"] = "无法解析Steam ID,请提供有效的SteamID,SteamID3或SteamID64.";
+                }
+            }
+            Server.SendResult(context,Body: JsonConvert.SerializeObject(result));
+        }
+
         public static void ProcessLoginFailed(HttpListenerContext context,IDictionary<string,string> data)
         {
-            var target = accountManager.Accounts.Values.Where((a) => !a.LoggedIn && !a.Connected && !AccountManager.DelayedLoginQueue.Contains(a) && a.DelayedActionsEmpty).ToList();
+            var target = accountManager.Accounts.Values.Where((a) => !a.Disabled && !a.LoggedIn && !a.Connected && !AccountManager.DelayedLoginQueue.Contains(a) && a.DelayedActionsEmpty).ToList();
             target.ForEach(AccountManager.DelayedLoginQueue.Enqueue);
             Server.SendResult(context,Body: JsonConvert.SerializeObject(new Dictionary<string,object>()
             {

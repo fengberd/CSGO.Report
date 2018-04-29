@@ -43,7 +43,7 @@ namespace Medusa
             while(DelayedLoginQueue.Count != 0)
             {
                 var account = DelayedLoginQueue.Dequeue();
-                if(account.LoggedIn)
+                if(account.LoggedIn || account.Disabled)
                 {
                     continue;
                 }
@@ -60,7 +60,7 @@ namespace Medusa
                 {
                     delay -= 5;
                 }
-                account.AddDelayAction(delay,() => account.Connect());
+                account.AddDelayedAction(delay,() => account.Connect());
             }
             DelayTo = Math.Max(DelayTo,Utils.Time()) + delay;
             Accounts.Values.ToList().ForEach((a) => a.Tick(Tick));
