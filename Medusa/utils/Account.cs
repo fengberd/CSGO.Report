@@ -144,16 +144,16 @@ namespace Medusa.utils
                                         Packet = new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_ClientReportPlayer>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientReportPlayer)
                                         {
                                             Body =
-                                        {
-                                            account_id = report.SteamID.AccountID,
-                                            match_id = report.MatchID,
-                                            rpt_aimbot = Convert.ToUInt32(report.AimHacking),
-                                            rpt_wallhack = Convert.ToUInt32(report.WallHacking),
-                                            rpt_speedhack = Convert.ToUInt32(report.OtherHacking),
-                                            rpt_teamharm = Convert.ToUInt32(report.Griefing),
-                                            rpt_textabuse = Convert.ToUInt32(report.AbusiveText),
-                                            rpt_voiceabuse = Convert.ToUInt32(report.AbusiveVoice)
-                                        }
+                                            {
+                                                account_id = report.SteamID.AccountID,
+                                                match_id = report.MatchID,
+                                                rpt_aimbot = Convert.ToUInt32(report.AimHacking),
+                                                rpt_wallhack = Convert.ToUInt32(report.WallHacking),
+                                                rpt_speedhack = Convert.ToUInt32(report.OtherHacking),
+                                                rpt_teamharm = Convert.ToUInt32(report.Griefing),
+                                                rpt_textabuse = Convert.ToUInt32(report.AbusiveText),
+                                                rpt_voiceabuse = Convert.ToUInt32(report.AbusiveVoice)
+                                            }
                                         }
                                     });
                                 }
@@ -166,17 +166,17 @@ namespace Medusa.utils
                                         Packet = new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_ClientCommendPlayer>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_ClientCommendPlayer)
                                         {
                                             Body =
-                                        {
-                                            account_id = commend.SteamID.AccountID,
-                                            match_id = commend.MatchID,
-                                            commendation = new PlayerCommendationInfo
                                             {
-                                                cmd_friendly = Convert.ToUInt32(commend.Friendly),
-                                                cmd_teaching = Convert.ToUInt32(commend.GoodTeacher),
-                                                cmd_leader = Convert.ToUInt32( commend.GoodLeader)
-                                            },
-                                            tokens = 0
-                                        }
+                                                account_id = commend.SteamID.AccountID,
+                                                match_id = commend.MatchID,
+                                                commendation = new PlayerCommendationInfo
+                                                {
+                                                    cmd_friendly = Convert.ToUInt32(commend.Friendly),
+                                                    cmd_teaching = Convert.ToUInt32(commend.GoodTeacher),
+                                                    cmd_leader = Convert.ToUInt32( commend.GoodLeader)
+                                                },
+                                                tokens = 0
+                                            }
                                         }
                                     });
                                 }
@@ -188,9 +188,9 @@ namespace Medusa.utils
                                         Packet = new ClientGCMsgProtobuf<CMsgGCCStrike15_v2_MatchListRequestLiveGameForUser>((uint)ECsgoGCMsg.k_EMsgGCCStrike15_v2_MatchListRequestLiveGameForUser)
                                         {
                                             Body =
-                                        {
-                                            accountid = action.SteamID.AccountID
-                                        }
+                                            {
+                                                accountid = action.SteamID.AccountID
+                                            }
                                         }
                                     });
                                 }
@@ -531,13 +531,13 @@ namespace Medusa.utils
                             }
                             actionQueue.Dequeue();
                             MedusaWebServer.addLog(new Dictionary<string,object>()
-                        {
-                            { "type", "commend" },
-                            { "username", Username },
-                            { "steamid", commend.SteamID.ConvertToUInt64().ToString() },
-                            { "flags", commend.Flags },
-                            { "time", Utils.Time() },
-                        });
+                            {
+                                { "type", "commend" },
+                                { "username", Username },
+                                { "steamid", commend.SteamID.ConvertToUInt64().ToString() },
+                                { "flags", commend.Flags },
+                                { "time", Utils.Time() },
+                            });
                             FailActionCounter = -1;
                             ProcessingAction = false;
                             Logger.Info(PREFIX + "Successfully commended " + commend.SteamID.ConvertToUInt64() + ".");
