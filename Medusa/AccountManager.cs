@@ -39,7 +39,7 @@ namespace Medusa
 
         public void Tick(long Tick)
         {
-            int delay = Math.Max(0,(int)(DelayTo - Utils.Time()));
+            uint delay = (uint)Math.Max(0,(int)(DelayTo - Utils.Time()));
             while(DelayedLoginQueue.Count != 0)
             {
                 var account = DelayedLoginQueue.Dequeue();

@@ -5,6 +5,6 @@ namespace Medusa.utils
     public class AccountDelayedAction
     {
         public Action Action;
-        public int SecondsRemain = 0;
+        public uint SecondsRemain = 0;
     }
 }
