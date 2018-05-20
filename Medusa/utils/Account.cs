@@ -513,12 +513,12 @@ namespace Medusa.utils
                     ReportInfo report;
                     lock(actionQueue)
                     {
-                        report = actionQueue.Peek() as ReportInfo;
+                        report = actionQueue.Count == 0 ? null : actionQueue.Peek() as ReportInfo;
                         if(report == null)
                         {
                             // IDK why we'll get a ClientReportResponse instead of ClientCommendPlayerQueryResponse
                             // CSGO things bro ;D
-                            var commend = actionQueue.Peek() as CommendInfo;
+                            var commend = actionQueue.Count == 0 ? null : actionQueue.Peek() as CommendInfo;
                             if(commend == null)
                             {
                                 Logger.Warning(PREFIX + "Something wrong happened,maybe we just failed a report and recieved it's response.");
@@ -569,7 +569,7 @@ namespace Medusa.utils
                     GetLiveGameInfo getLiveGame;
                     lock(actionQueue)
                     {
-                        getLiveGame = actionQueue.Peek() as GetLiveGameInfo;
+                        getLiveGame = actionQueue.Count == 0 ? null : actionQueue.Peek() as GetLiveGameInfo;
                         if(getLiveGame == null)
                         {
                             Logger.Warning(PREFIX + "Something wrong happened,maybe we just failed a GetLiveGame and recieved it's response.");
